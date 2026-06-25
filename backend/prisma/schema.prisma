@@ -1,0 +1,374 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Strain {
+  id             String     @id @default(uuid()) @db.Uuid
+  name           String     @db.VarChar(200)
+  type           StrainType
+  thcPercent     Decimal?   @map("thc_percent") @db.Decimal(5, 2)
+  cbdPercent     Decimal?   @map("cbd_percent") @db.Decimal(5, 2)
+  terpeneProfile String?    @map("terpene_profile")
+  aliases        String[]
+  createdAt      DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  batches        Batch[]
+  products       Product[]
+
+  @@map("strains")
+}
+
+model Batch {
+  id                   String                @id @default(uuid()) @db.Uuid
+  lotNumber            String                @unique @map("lot_number") @db.VarChar(100)
+  strainId             String                @map("strain_id") @db.Uuid
+  supplier             String?               @db.VarChar(200)
+  harvestDate          DateTime?             @map("harvest_date") @db.Date
+  productionDate       DateTime?             @map("production_date") @db.Date
+  labResults           Json?                 @map("lab_results")
+  expirationDate       DateTime?             @map("expiration_date") @db.Date
+  currentPotencyThc    Decimal?              @map("current_potency_thc") @db.Decimal(5, 2)
+  createdAt            DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
+  strain               Strain                @relation(fields: [strainId], references: [id])
+  inventoryAdjustments InventoryAdjustment[]
+  products             Product[]
+  transactionItems     TransactionItem[]
+
+  @@index([strainId])
+  @@map("batches")
+}
+
+model Product {
+  id                   String                @id @default(uuid()) @db.Uuid
+  sku                  String                @unique @db.VarChar(50)
+  name                 String                @db.VarChar(200)
+  category             ProductCategory
+  strainId             String?               @map("strain_id") @db.Uuid
+  batchId              String?               @map("batch_id") @db.Uuid
+  costPrice            Decimal               @default(0) @map("cost_price") @db.Decimal(10, 2)
+  sellPrice            Decimal               @default(0) @map("sell_price") @db.Decimal(10, 2)
+  unitType             UnitType              @default(each) @map("unit_type")
+  weightGrams          Decimal?              @map("weight_grams") @db.Decimal(8, 3)
+  barcode              String?               @db.VarChar(100)
+  taxCategory          TaxCategory           @default(standard) @map("tax_category")
+  isActive             Boolean               @default(true) @map("is_active")
+  createdAt            DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
+  inventory            Inventory[]
+  inventoryAdjustments InventoryAdjustment[]
+  batch                Batch?                @relation(fields: [batchId], references: [id])
+  strain               Strain?               @relation(fields: [strainId], references: [id])
+  transactionItems     TransactionItem[]
+
+  @@index([category])
+  @@index([strainId])
+  @@index([batchId])
+  @@map("products")
+}
+
+model Location {
+  id                   String                @id @default(uuid()) @db.Uuid
+  name                 String                @db.VarChar(200)
+  address              String?
+  licenseNumber        String?               @map("license_number") @db.VarChar(100)
+  isActive             Boolean               @default(true) @map("is_active")
+  createdAt            DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  auditLogs            AuditLog[]
+  cartHolds            CartHold[]
+  cashDrawerSessions   CashDrawerSession[]
+  inventory            Inventory[]
+  inventoryAdjustments InventoryAdjustment[]
+  transactions         Transaction[]
+  customers            Customer[]
+  users                User[]
+
+  @@map("locations")
+}
+
+model Inventory {
+  id           String   @id @default(uuid()) @db.Uuid
+  productId    String   @map("product_id") @db.Uuid
+  locationId   String   @map("location_id") @db.Uuid
+  quantity     Decimal  @default(0) @db.Decimal(10, 3)
+  reorderPoint Decimal  @default(5) @map("reorder_point") @db.Decimal(10, 3)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  location     Location @relation(fields: [locationId], references: [id])
+  product      Product  @relation(fields: [productId], references: [id])
+
+  @@unique([productId, locationId])
+  @@index([locationId, productId])
+  @@map("inventory")
+}
+
+model User {
+  id                       String                @id @default(uuid()) @db.Uuid
+  email                    String                @unique @db.VarChar(255)
+  passwordHash             String                @map("password_hash") @db.VarChar(255)
+  fullName                 String                @map("full_name") @db.VarChar(200)
+  pin                      String?               @db.VarChar(6)
+  role                     UserRole              @default(budtender)
+  locationId               String?               @map("location_id") @db.Uuid
+  isActive                 Boolean               @default(true) @map("is_active")
+  createdAt                DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  auditLogs                AuditLog[]
+  cartHolds                CartHold[]
+  cashDrawerSessions       CashDrawerSession[]
+  inventoryAdjustmentsAppr InventoryAdjustment[] @relation("AdjustmentApprover")
+  inventoryAdjustmentsLog  InventoryAdjustment[] @relation("AdjustmentEmployee")
+  transactions             Transaction[]         @relation("BudtenderTransactions")
+  verifiedTransactions     Transaction[]         @relation("IDVerifier")
+  voidedTransactions       Transaction[]         @relation("VoidApprover")
+  location                 Location?             @relation(fields: [locationId], references: [id])
+
+  @@map("users")
+}
+
+model Transaction {
+  id             String            @id @default(uuid()) @db.Uuid
+  transactionNum Int               @map("transaction_num")
+  locationId     String            @map("location_id") @db.Uuid
+  budtenderId    String            @map("budtender_id") @db.Uuid
+  customerId     String?           @map("customer_id") @db.Uuid
+  subtotal       Decimal           @db.Decimal(12, 2)
+  discountTotal  Decimal           @default(0) @map("discount_total") @db.Decimal(12, 2)
+  taxTotal       Decimal           @map("tax_total") @db.Decimal(12, 2)
+  grandTotal     Decimal           @map("grand_total") @db.Decimal(12, 2)
+  status         TransactionStatus @default(completed)
+  voidReason     String?           @map("void_reason") @db.VarChar(50)
+  voidApprovedBy String?           @map("void_approved_by") @db.Uuid
+  notes          String?
+  idVerified     Boolean           @default(false) @map("id_verified")
+  idVerifiedBy   String?           @map("id_verified_by") @db.Uuid
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  payments       Payment[]
+  items          TransactionItem[]
+  budtender      User              @relation("BudtenderTransactions", fields: [budtenderId], references: [id])
+  idVerifier     User?             @relation("IDVerifier", fields: [idVerifiedBy], references: [id])
+  location       Location          @relation(fields: [locationId], references: [id])
+  voidApprover   User?             @relation("VoidApprover", fields: [voidApprovedBy], references: [id])
+  customer       Customer?          @relation(fields: [customerId], references: [id])
+
+  @@index([locationId, createdAt])
+  @@index([locationId, createdAt(sort: Desc)], map: "transactions_location_id_created_at_desc_idx")
+  @@map("transactions")
+}
+
+model TransactionItem {
+  id             String      @id @default(uuid()) @db.Uuid
+  transactionId  String      @map("transaction_id") @db.Uuid
+  productId      String      @map("product_id") @db.Uuid
+  batchId        String      @map("batch_id") @db.Uuid
+  quantity       Decimal     @db.Decimal(10, 3)
+  unitPrice      Decimal     @map("unit_price") @db.Decimal(10, 2)
+  discountAmount Decimal     @default(0) @map("discount_amount") @db.Decimal(10, 2)
+  taxAmount      Decimal     @map("tax_amount") @db.Decimal(10, 2)
+  taxRate        Decimal     @map("tax_rate") @db.Decimal(5, 3)
+  total          Decimal     @db.Decimal(10, 2)
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  batch          Batch       @relation(fields: [batchId], references: [id])
+  product        Product     @relation(fields: [productId], references: [id])
+  transaction    Transaction @relation(fields: [transactionId], references: [id])
+
+  @@index([transactionId])
+  @@map("transaction_items")
+}
+
+model Payment {
+  id            String        @id @default(uuid()) @db.Uuid
+  transactionId String        @map("transaction_id") @db.Uuid
+  paymentMethod PaymentMethod @map("payment_method")
+  amount        Decimal       @db.Decimal(12, 2)
+  cashTendered  Decimal?      @map("cash_tendered") @db.Decimal(12, 2)
+  changeDue     Decimal?      @map("change_due") @db.Decimal(12, 2)
+  cardLastFour  String?       @map("card_last_four") @db.VarChar(4)
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  transaction   Transaction   @relation(fields: [transactionId], references: [id])
+
+  @@map("payments")
+}
+
+model InventoryAdjustment {
+  id         String           @id @default(uuid()) @db.Uuid
+  productId  String           @map("product_id") @db.Uuid
+  batchId    String?          @map("batch_id") @db.Uuid
+  locationId String           @map("location_id") @db.Uuid
+  quantity   Decimal          @db.Decimal(10, 3)
+  reasonCode AdjustmentReason @map("reason_code")
+  notes      String?
+  employeeId String           @map("employee_id") @db.Uuid
+  approvedBy String?          @map("approved_by") @db.Uuid
+  createdAt  DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  approver   User?            @relation("AdjustmentApprover", fields: [approvedBy], references: [id])
+  batch      Batch?           @relation(fields: [batchId], references: [id])
+  employee   User             @relation("AdjustmentEmployee", fields: [employeeId], references: [id])
+  location   Location         @relation(fields: [locationId], references: [id])
+  product    Product          @relation(fields: [productId], references: [id])
+
+  @@index([locationId, createdAt])
+  @@map("inventory_adjustments")
+}
+
+model CashDrawerSession {
+  id             String       @id @default(uuid()) @db.Uuid
+  locationId     String       @map("location_id") @db.Uuid
+  userId         String       @map("user_id") @db.Uuid
+  openingAmount  Decimal      @map("opening_amount") @db.Decimal(12, 2)
+  closingAmount  Decimal?     @map("closing_amount") @db.Decimal(12, 2)
+  expectedAmount Decimal?     @map("expected_amount") @db.Decimal(12, 2)
+  difference     Decimal?     @db.Decimal(12, 2)
+  openedAt       DateTime     @default(now()) @map("opened_at") @db.Timestamptz(6)
+  closedAt       DateTime?    @map("closed_at") @db.Timestamptz(6)
+  status         DrawerStatus @default(open)
+  location       Location     @relation(fields: [locationId], references: [id])
+  user           User         @relation(fields: [userId], references: [id])
+
+  @@map("cash_drawer_sessions")
+}
+
+model CartHold {
+  id           String   @id @default(uuid()) @db.Uuid
+  locationId   String   @map("location_id") @db.Uuid
+  budtenderId  String   @map("budtender_id") @db.Uuid
+  cartData     Json     @map("cart_data")
+  customerName String?  @map("customer_name") @db.VarChar(200)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  expiresAt    DateTime @default(now()) @map("expires_at") @db.Timestamptz(6)
+  budtender    User     @relation(fields: [budtenderId], references: [id])
+  location     Location @relation(fields: [locationId], references: [id])
+
+  @@index([locationId, budtenderId])
+  @@map("cart_holds")
+}
+
+model Customer {
+  id           String         @id @default(uuid()) @db.Uuid
+  firstName    String         @map("first_name") @db.VarChar(100)
+  lastName     String         @map("last_name") @db.VarChar(100)
+  email        String?        @db.VarChar(255)
+  phone        String?        @db.VarChar(20)
+  locationId   String         @map("location_id") @db.Uuid
+  totalVisits  Int            @default(0) @map("total_visits")
+  totalSpend   Decimal        @default(0) @map("total_spend") @db.Decimal(14, 2)
+  consentSMS   Boolean        @default(false) @map("consent_sms")
+  telegramChatId String?      @map("telegram_chat_id") @db.VarChar(100)
+  lastVisitAt  DateTime?      @map("last_visit_at") @db.Timestamptz(6)
+  createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  location     Location       @relation(fields: [locationId], references: [id])
+  transactions Transaction[]
+  messagingLogs MessagingLog[]
+
+  @@index([locationId])
+  @@index([phone])
+  @@index([email, locationId])
+  @@map("customers")
+}
+
+model MessagingLog {
+  id           String    @id @default(uuid()) @db.Uuid
+  customerId   String    @map("customer_id") @db.Uuid
+  channel      String    @db.VarChar(20)
+  message      String
+  status       String    @db.VarChar(20)
+  errorMessage String?   @map("error_message")
+  sentBy       String    @map("sent_by") @db.Uuid
+  sentAt       DateTime  @default(now()) @map("sent_at") @db.Timestamptz(6)
+  customer     Customer  @relation(fields: [customerId], references: [id])
+
+  @@index([customerId])
+  @@index([sentAt(sort: Desc)])
+  @@map("messaging_logs")
+}
+
+model AuditLog {
+  id          BigInt   @id @default(autoincrement())
+  entityType  String   @map("entity_type") @db.VarChar(50)
+  entityId    String   @map("entity_id") @db.Uuid
+  action      String   @db.VarChar(20)
+  changes     Json
+  performedBy String   @map("performed_by") @db.Uuid
+  locationId  String   @map("location_id") @db.Uuid
+  ipAddress   String?  @map("ip_address") @db.Inet
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  location    Location @relation(fields: [locationId], references: [id])
+  performer   User     @relation(fields: [performedBy], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([createdAt(sort: Desc)])
+  @@map("audit_log")
+}
+
+enum StrainType {
+  indica
+  sativa
+  hybrid
+}
+
+enum ProductCategory {
+  flower
+  pre_roll
+  vape
+  concentrate
+  edible
+  topical
+  accessory
+}
+
+enum UnitType {
+  each
+  gram
+  eighth
+  quarter
+  half
+  ounce
+}
+
+enum TaxCategory {
+  standard
+  excise_flower
+  excise_edible
+  excise_concentrate
+  no_tax
+}
+
+enum UserRole {
+  budtender
+  shift_manager
+  store_manager
+  admin
+}
+
+enum TransactionStatus {
+  completed
+  voided
+  refunded
+  partial_refund
+}
+
+enum PaymentMethod {
+  cash
+  card
+  other
+}
+
+enum AdjustmentReason {
+  damaged
+  gifted
+  internal_use
+  theft
+  expired
+  correction
+  transfer_out
+  transfer_in
+}
+
+enum DrawerStatus {
+  open
+  closed
+}

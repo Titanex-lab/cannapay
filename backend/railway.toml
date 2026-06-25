@@ -1,0 +1,17 @@
+# Railway deployment config for CannaPay Backend
+# Docs: https://docs.railway.com/reference/build-config
+
+[build]
+  builder = "NIXPACKS"
+  buildCommand = "npm install && npx prisma generate && npm run build"
+
+[deploy]
+  startCommand = "npm start"
+  healthcheckPath = "/api/health"
+  restartPolicyType = "ALWAYS"
+
+# Railway auto-detects Node.js + package.json scripts.
+# The prestart hook runs migrations, postinstall generates Prisma client.
+# 
+# After first deploy, seed the database:
+#   railway run "npm run db:seed"
