@@ -14,13 +14,15 @@ export interface LeaflyStrain {
 
 const cache = new Map<string, { data: LeaflyStrain | null; ts: number }>();
 const CACHE_MS = 24 * 60 * 60 * 1000;
+const SEARCH_CACHE = new Map<string, { data: { name: string; slug: string }[]; ts: number }>();
+const SEARCH_CACHE_MS = 5 * 60 * 1000; // 5 minutes
 
 const HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
   'Accept': 'application/json',
 };
 
-// Popular strain index for autocomplete — built from known Leafly slugs
+// Comprehensive strain index — 100+ popular strains from Leafly
 const STRAIN_INDEX: { name: string; slug: string }[] = [
   { name: 'Blue Dream', slug: 'blue-dream' },
   { name: 'Wedding Cake', slug: 'wedding-cake' },
@@ -52,6 +54,118 @@ const STRAIN_INDEX: { name: string; slug: string }[] = [
   { name: 'Purple Punch', slug: 'purple-punch' },
   { name: 'Strawberry Cough', slug: 'strawberry-cough' },
   { name: 'Cherry Pie', slug: 'cherry-pie' },
+  { name: 'Afghan Kush', slug: 'afghan-kush' },
+  { name: 'Alien OG', slug: 'alien-og' },
+  { name: 'Apple Fritter', slug: 'apple-fritter' },
+  { name: 'Banana Kush', slug: 'banana-kush' },
+  { name: 'Biscotti', slug: 'biscotti' },
+  { name: 'Blackberry Kush', slug: 'blackberry-kush' },
+  { name: 'Blue Cheese', slug: 'blue-cheese' },
+  { name: 'Bubble Gum', slug: 'bubble-gum' },
+  { name: 'Candyland', slug: 'candyland' },
+  { name: 'Chemdawg', slug: 'chemdawg' },
+  { name: 'Cherry AK-47', slug: 'cherry-ak-47' },
+  { name: 'Chocolate Thai', slug: 'chocolate-thai' },
+  { name: 'Cookies and Cream', slug: 'cookies-and-cream' },
+  { name: 'Critical Mass', slug: 'critical-mass' },
+  { name: 'Death Star', slug: 'death-star' },
+  { name: 'Dutch Treat', slug: 'dutch-treat' },
+  { name: 'Fire OG', slug: 'fire-og' },
+  { name: 'Forbidden Fruit', slug: 'forbidden-fruit' },
+  { name: 'Fruity Pebbles', slug: 'fruity-pebbles' },
+  { name: 'Ghost Train Haze', slug: 'ghost-train-haze' },
+  { name: 'Godfather OG', slug: 'godfather-og' },
+  { name: 'Golden Goat', slug: 'golden-goat' },
+  { name: 'Grape Ape', slug: 'grape-ape' },
+  { name: 'Harlequin', slug: 'harlequin' },
+  { name: 'Headband', slug: 'headband' },
+  { name: 'Hindu Kush', slug: 'hindu-kush' },
+  { name: 'Ice Cream Cake', slug: 'ice-cream-cake' },
+  { name: 'Jillybean', slug: 'jillybean' },
+  { name: 'King Louis XIII', slug: 'king-louis-xiii' },
+  { name: 'LA Confidential', slug: 'la-confidential' },
+  { name: 'Laughing Buddha', slug: 'laughing-buddha' },
+  { name: 'Lemon Skunk', slug: 'lemon-skunk' },
+  { name: 'MAC', slug: 'mac' },
+  { name: 'Mango Kush', slug: 'mango-kush' },
+  { name: 'Master Kush', slug: 'master-kush' },
+  { name: 'Maui Wowie', slug: 'maui-wowie' },
+  { name: 'NYC Diesel', slug: 'nyc-diesel' },
+  { name: 'Obama Kush', slug: 'obama-kush' },
+  { name: 'Orange Crush', slug: 'orange-crush' },
+  { name: 'Pink Kush', slug: 'pink-kush' },
+  { name: 'Platinum OG', slug: 'platinum-og' },
+  { name: 'Purple Haze', slug: 'purple-haze' },
+  { name: 'Purple Urkle', slug: 'purple-urkle' },
+  { name: 'SFV OG', slug: 'sfv-og' },
+  { name: 'Sherbet', slug: 'sherbet' },
+  { name: 'Skywalker OG', slug: 'skywalker-og' },
+  { name: 'Strawberry Banana', slug: 'strawberry-banana' },
+  { name: 'Sunset Sherbet', slug: 'sunset-sherbet' },
+  { name: 'Super Lemon Haze', slug: 'super-lemon-haze' },
+  { name: 'Tahoe OG', slug: 'tahoe-og' },
+  { name: 'Tangie', slug: 'tangie' },
+  { name: 'Tangerine Dream', slug: 'tangerine-dream' },
+  { name: 'White Rhino', slug: 'white-rhino' },
+  { name: 'White Buffalo', slug: 'white-buffalo' },
+  { name: 'White Fire OG', slug: 'white-fire-og' },
+  { name: 'White Runtz', slug: 'white-runtz' },
+  { name: 'Yoda OG', slug: 'yoda-og' },
+  { name: 'Acapulco Gold', slug: 'acapulco-gold' },
+  { name: 'Agent Orange', slug: 'agent-orange' },
+  { name: 'Alaskan Thunder Fuck', slug: 'alaskan-thunder-fuck' },
+  { name: 'Animal Cookies', slug: 'animal-cookies' },
+  { name: 'Apple Jack', slug: 'apple-jack' },
+  { name: 'Berry White', slug: 'berry-white' },
+  { name: 'Black Widow', slug: 'black-widow' },
+  { name: 'Blue Cookies', slug: 'blue-cookies' },
+  { name: 'Blue Gelato', slug: 'blue-gelato' },
+  { name: 'Candy Jack', slug: 'candy-jack' },
+  { name: 'Cinex', slug: 'cinex' },
+  { name: 'Cookie Dough', slug: 'cookie-dough' },
+  { name: 'Cotton Candy Kush', slug: 'cotton-candy-kush' },
+  { name: 'Double Dream', slug: 'double-dream' },
+  { name: 'Dragon OG', slug: 'dragon-og' },
+  { name: 'G13', slug: 'g13' },
+  { name: 'Gelato 33', slug: 'gelato-33' },
+  { name: 'Ghost OG', slug: 'ghost-og' },
+  { name: 'Girl Scout Glue', slug: 'girl-scout-glue' },
+  { name: 'GMO Cookies', slug: 'gmo-cookies' },
+  { name: 'Grape Stomper', slug: 'grape-stomper' },
+  { name: 'Green Goblin', slug: 'green-goblin' },
+  { name: 'Guava Kush', slug: 'guava-kush' },
+  { name: 'Hell Fire OG', slug: 'hell-fire-og' },
+  { name: 'Holy Grail Kush', slug: 'holy-grail-kush' },
+  { name: 'Incredible Hulk', slug: 'incredible-hulk' },
+  { name: 'Key Lime Pie', slug: 'key-lime-pie' },
+  { name: 'King Kong', slug: 'king-kong' },
+  { name: 'Lemon OG', slug: 'lemon-og' },
+  { name: 'LSD', slug: 'lsd' },
+  { name: 'Mazar', slug: 'mazar' },
+  { name: 'Moonshine Haze', slug: 'moonshine-haze' },
+  { name: 'Ninja Fruit', slug: 'ninja-fruit' },
+  { name: 'Panama Red', slug: 'panama-red' },
+  { name: 'Pineapple Kush', slug: 'pineapple-kush' },
+  { name: 'Pre-98 Bubba Kush', slug: 'pre-98-bubba-kush' },
+  { name: 'Purple Diesel', slug: 'purple-diesel' },
+  { name: 'Purple Kush', slug: 'purple-kush' },
+  { name: 'Recon', slug: 'recon' },
+  { name: 'Red Dragon', slug: 'red-dragon' },
+  { name: 'Skunk #1', slug: 'skunk-1' },
+  { name: 'Sour Tangie', slug: 'sour-tangie' },
+  { name: 'Space Queen', slug: 'space-queen' },
+  { name: 'Strawberry Diesel', slug: 'strawberry-diesel' },
+  { name: 'Sunset OG', slug: 'sunset-og' },
+  { name: 'Sweet Tooth', slug: 'sweet-tooth' },
+  { name: 'Thin Mint GSC', slug: 'thin-mint-gsc' },
+  { name: 'Triple OG', slug: 'triple-og' },
+  { name: 'True OG', slug: 'true-og' },
+  { name: 'Vanilla Kush', slug: 'vanilla-kush' },
+  { name: 'Venom OG', slug: 'venom-og' },
+  { name: 'White Cookies', slug: 'white-cookies' },
+  { name: 'White Diesel', slug: 'white-diesel' },
+  { name: 'White Lavender', slug: 'white-lavender' },
+  { name: 'White Nightmare', slug: 'white-nightmare' },
 ];
 
 function slugify(name: string): string {
@@ -122,6 +236,12 @@ export async function fetchLeaflyStrain(query: string): Promise<LeaflyStrain | n
       topEffect: data.topEffect || null,
     };
     cache.set(slug, { data: strain, ts: Date.now() });
+
+    // Also add to the search index if not already there
+    if (!STRAIN_INDEX.some(s => s.slug === data.slug)) {
+      STRAIN_INDEX.push({ name: data.name, slug: data.slug });
+    }
+
     return strain;
   } catch (err: any) {
     console.error('[leafly] Error:', err?.message || String(err));
@@ -133,14 +253,24 @@ export async function fetchLeaflyStrain(query: string): Promise<LeaflyStrain | n
 export function searchLeaflyStrains(query: string): { name: string; slug: string }[] {
   if (!query || query.length < 1) return [];
   const q = query.toLowerCase();
+
+  // Check search cache first
+  const cached = SEARCH_CACHE.get(q);
+  if (cached && Date.now() - cached.ts < SEARCH_CACHE_MS) return cached.data;
+
   // Match against the index — starts-with or contains
   const matches = STRAIN_INDEX
     .filter(s => s.name.toLowerCase().includes(q) || s.slug.includes(q))
-    .slice(0, 6);
-  // Also try the query as a direct slug (so custom strains work too)
+    .slice(0, 8);
+
+  // Also try the query as a direct slug
   const sl = slugify(query);
-  if (!matches.some(m => m.slug === sl)) {
+  if (!matches.some(m => m.slug === sl) && q.length >= 2) {
     matches.unshift({ name: query, slug: sl });
   }
-  return matches;
+
+  // Trim to 8 max
+  const results = matches.slice(0, 8);
+  SEARCH_CACHE.set(q, { data: results, ts: Date.now() });
+  return results;
 }
