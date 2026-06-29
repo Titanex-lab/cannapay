@@ -1,6 +1,6 @@
-import { config } from '../config';
+import https from 'https';
 
-const LEAFLY_API = 'https://consumer-api.leafly.com/api/strains/v1';
+const LEAFLY_API = 'consumer-api.leafly.com';
 
 interface LeaflyStrain {
   name: string;
@@ -13,7 +13,7 @@ interface LeaflyStrain {
 }
 
 const cache = new Map<string, { data: LeaflyStrain | null; ts: number }>();
-const CACHE_MS = 24 * 60 * 60 * 1000; // 24 hours
+const CACHE_MS = 24 * 60 * 60 * 1000;
 
 function slugify(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -23,11 +23,18 @@ function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, '').replace(/&[^;]+;/g, '').trim();
 }
 
-export async function fetchLeaflyStrain(query: string): Promise<LeaflyStrain | null> {
-  return searchStrains(query);
+function httpGet(url: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    https.get(url, { headers: { 'Accept': 'application/json' } }, (res) => {
+      let data = '';
+      res.on('data', (chunk: string) => data += chunk);
+      res.on('end', () => resolve(data));
+      res.on('error', reject);
+    }).on('error', reject).setTimeout(8000, () => reject(new Error('timeout')));
+  });
 }
 
-async function searchStrains(query: string): Promise<LeaflyStrain | null> {
+export async function fetchLeaflyStrain(query: string): Promise<LeaflyStrain | null> {
   const slug = slugify(query);
   if (!slug) return null;
 
@@ -35,21 +42,9 @@ async function searchStrains(query: string): Promise<LeaflyStrain | null> {
   if (cached && Date.now() - cached.ts < CACHE_MS) return cached.data;
 
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
+    const raw = await httpGet(`https://${LEAFLY_API}/api/strains/v1/${slug}`);
+    const data = JSON.parse(raw);
 
-    const res = await fetch(`${LEAFLY_API}/${slug}`, {
-      signal: controller.signal,
-      headers: { 'Accept': 'application/json' },
-    });
-    clearTimeout(timeout);
-
-    if (!res.ok) {
-      cache.set(slug, { data: null, ts: Date.now() });
-      return null;
-    }
-
-    const data = await res.json();
     if (!data?.name) {
       cache.set(slug, { data: null, ts: Date.now() });
       return null;
@@ -68,7 +63,7 @@ async function searchStrains(query: string): Promise<LeaflyStrain | null> {
     cache.set(slug, { data: strain, ts: Date.now() });
     return strain;
   } catch (err) {
-    console.error('[leafly] Error fetching strain:', err instanceof Error ? err.message : err);
+    console.error('[leafly] Error fetching strain:', err instanceof Error ? err.message : String(err));
     cache.set(slug, { data: null, ts: Date.now() });
     return null;
   }
