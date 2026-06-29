@@ -67,7 +67,8 @@ async function searchStrains(query: string): Promise<LeaflyStrain | null> {
 
     cache.set(slug, { data: strain, ts: Date.now() });
     return strain;
-  } catch {
+  } catch (err) {
+    console.error('[leafly] Error fetching strain:', err instanceof Error ? err.message : err);
     cache.set(slug, { data: null, ts: Date.now() });
     return null;
   }
