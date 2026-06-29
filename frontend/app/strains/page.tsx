@@ -57,7 +57,7 @@ export default function StrainsPage() {
 
   // Debounced Leafly search (backend proxy)
   useEffect(() => {
-    if (leaflyQuery.length < 2) { setLeaflyResult(null); setLeaflySuggestions([]); return; }
+    if (leaflyQuery.length < 1) { setLeaflyResult(null); setLeaflySuggestions([]); return; }
     const timer = setTimeout(async () => {
       setLeaflyLoading(true);
       try {
@@ -271,7 +271,6 @@ export default function StrainsPage() {
                           } catch {}
                         }} className="w-full text-left px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 border-b border-slate-700 last:border-0">
                           <span className="font-medium text-white">{s.name}</span>
-                          <span className="ml-2 text-xs text-slate-500">{s.category}</span>
                         </button>
                       ))}
                     </div>

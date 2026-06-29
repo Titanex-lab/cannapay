@@ -20,6 +20,40 @@ const HEADERS = {
   'Accept': 'application/json',
 };
 
+// Popular strain index for autocomplete — built from known Leafly slugs
+const STRAIN_INDEX: { name: string; slug: string }[] = [
+  { name: 'Blue Dream', slug: 'blue-dream' },
+  { name: 'Wedding Cake', slug: 'wedding-cake' },
+  { name: 'OG Kush', slug: 'og-kush' },
+  { name: 'Girl Scout Cookies', slug: 'girl-scout-cookies' },
+  { name: 'Granddaddy Purple', slug: 'granddaddy-purple' },
+  { name: 'Durban Poison', slug: 'durban-poison' },
+  { name: 'Gelato', slug: 'gelato' },
+  { name: 'White Widow', slug: 'white-widow' },
+  { name: 'Sour Diesel', slug: 'sour-diesel' },
+  { name: 'Northern Lights', slug: 'northern-lights' },
+  { name: 'Runtz', slug: 'runtz' },
+  { name: 'Do-Si-Dos', slug: 'do-si-dos' },
+  { name: 'Jack Herer', slug: 'jack-herer' },
+  { name: 'Bubba Kush', slug: 'bubba-kush' },
+  { name: 'Pineapple Express', slug: 'pineapple-express' },
+  { name: 'Green Crack', slug: 'green-crack' },
+  { name: 'Mimosa', slug: 'mimosa' },
+  { name: 'Zkittlez', slug: 'zkittlez' },
+  { name: 'AK-47', slug: 'ak-47' },
+  { name: 'Cheese', slug: 'cheese' },
+  { name: 'Blueberry', slug: 'blueberry' },
+  { name: 'Super Silver Haze', slug: 'super-silver-haze' },
+  { name: 'Amnesia Haze', slug: 'amnesia-haze' },
+  { name: 'Bruce Banner', slug: 'bruce-banner' },
+  { name: 'Gorilla Glue', slug: 'gorilla-glue-4' },
+  { name: 'Trainwreck', slug: 'trainwreck' },
+  { name: 'Lemon Haze', slug: 'lemon-haze' },
+  { name: 'Purple Punch', slug: 'purple-punch' },
+  { name: 'Strawberry Cough', slug: 'strawberry-cough' },
+  { name: 'Cherry Pie', slug: 'cherry-pie' },
+];
+
 function slugify(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
@@ -30,22 +64,14 @@ function stripHtml(html: string): string {
 
 function extractDescription(data: any): string {
   const parts: string[] = [];
-
-  // Description text
   const desc = data.description ? stripHtml(data.description).slice(0, 200) : '';
   if (desc) parts.push(desc);
-
-  // Top effect
   if (data.topEffect) parts.push(`Top effect: ${data.topEffect}`);
-
-  // Terpenes (comma-separated names from topTerps or terps)
   const terps = data.topTerps || data.terps;
   if (terps && typeof terps === 'object') {
     const names = Object.values(terps).map((t: any) => t.name).join(', ');
     if (names) parts.push(`Terpenes: ${names}`);
   }
-
-  // Flavors
   const flavors = data.flavors;
   if (flavors && typeof flavors === 'object') {
     const top = Object.values(flavors)
@@ -55,7 +81,6 @@ function extractDescription(data: any): string {
       .join(', ');
     if (top) parts.push(`Flavors: ${top}`);
   }
-
   return parts.join(' · ');
 }
 
@@ -75,7 +100,7 @@ function httpGet(path: string): Promise<any> {
 }
 
 export async function fetchLeaflyStrain(query: string): Promise<LeaflyStrain | null> {
-  const slug = slugify(query);
+  const slug = query.includes('-') ? query : slugify(query);
   if (!slug) return null;
 
   const cached = cache.get(slug);
@@ -105,16 +130,17 @@ export async function fetchLeaflyStrain(query: string): Promise<LeaflyStrain | n
   }
 }
 
-export async function searchLeaflyStrains(query: string): Promise<{ name: string; slug: string; category: string }[]> {
-  const slug = slugify(query);
-  if (!slug) return [];
-  try {
-    const data = await httpGet(`/api/strains/v1/${slug}`);
-    if (data?.name) {
-      return [{ name: data.name, slug: data.slug, category: data.category || 'Hybrid' }];
-    }
-    return [];
-  } catch {
-    return [];
+export function searchLeaflyStrains(query: string): { name: string; slug: string }[] {
+  if (!query || query.length < 1) return [];
+  const q = query.toLowerCase();
+  // Match against the index — starts-with or contains
+  const matches = STRAIN_INDEX
+    .filter(s => s.name.toLowerCase().includes(q) || s.slug.includes(q))
+    .slice(0, 6);
+  // Also try the query as a direct slug (so custom strains work too)
+  const sl = slugify(query);
+  if (!matches.some(m => m.slug === sl)) {
+    matches.unshift({ name: query, slug: sl });
   }
+  return matches;
 }
