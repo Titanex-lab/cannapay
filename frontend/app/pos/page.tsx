@@ -95,56 +95,75 @@ export default function POSPage() {
         </main>
       )}
 
-      {/* ── MOBILE LAYOUT (<768px) — iOS-safe flex */}
-      {isMobile && (
-        <>
-          <div style={{position:'fixed', inset:0, bottom:48, display:'flex', flexDirection:'column', zIndex:10}}>
-            <div className="h-12 border-b border-slate-800 flex items-center justify-between px-3 bg-slate-950" style={{flexShrink:0}}>
-              <div className="bg-white rounded-md px-1.5 py-0.5">
-                <img src="/cannapay-logo.png" alt="CannaPay" className="h-8 w-auto" />
-              </div>
-              <LogoutButton />
-            </div>
-            <div style={{flex:1, overflowY:'auto', WebkitOverflowScrolling:'touch'}}>
-              <ProductSearch />
-            </div>
-            <div className="h-14 border-t border-slate-800 flex items-center justify-between px-3 bg-slate-950" style={{flexShrink:0, paddingBottom:'env(safe-area-inset-bottom, 0px)'}}>
-              <button onClick={() => setCartOpenMobile(true)} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 transition-colors">
-                <svg className="h-4 w-4 text-slate-300" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /></svg>
-                <span className="text-sm font-medium text-slate-200">{itemCount}</span>
-              </button>
-              <div className="flex items-center gap-2 flex-1 ml-3">
-                <span className="text-sm font-semibold tracking-tight whitespace-nowrap">R {subtotal.toFixed(2)}</span>
-                <button onClick={() => setShowCheckout(true)} disabled={items.length === 0} className="flex-1 bg-emerald-500 hover:bg-emerald-400 py-3 rounded-lg font-semibold text-sm disabled:opacity-40 transition-all shadow-sm shadow-emerald-500/20 min-h-[52px]">Checkout</button>
-              </div>
-            </div>
+      {/* ── MOBILE LAYOUT (<768px) — exact 100dvh rows, zero overflow */}
+      <div className="h-[100dvh] flex flex-col md:hidden">
+        {/* Row 1: Header — 52px */}
+        <div className="h-[52px] flex items-center justify-between px-4 bg-slate-900 border-b border-slate-800 shrink-0">
+          <div className="bg-white rounded-md px-1.5 py-0.5">
+            <img src="/cannapay-logo.png" alt="CannaPay" className="h-8 w-auto" />
           </div>
+          <LogoutButton />
+        </div>
 
-          <CartPanel isMobile={true} isOpen={cartOpenMobile} onClose={() => setCartOpenMobile(false)} />
-          <nav className="fixed bottom-0 left-0 right-0 z-40 flex border-t border-slate-800 bg-slate-950" style={{paddingBottom:'env(safe-area-inset-bottom, 0px)'}}>
-            {tabBarItems.map((tab) => {
-              const isActive = pathname === tab.href || pathname.startsWith(tab.href + '/');
-              return (
-                <Link key={tab.href} href={tab.href}
-                  className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors min-h-[48px] ${
-                    isActive ? 'text-emerald-400' : 'text-slate-500 hover:text-slate-300'
-                  }`}
-                >
-                  {tab.href === '/pos' ? (
-                    <div className="bg-white rounded-md p-0.5"><img src="/cannapay-logo.png" alt="POS" className="h-7 w-auto" /></div>
-                  ) : (
-                    <span className="text-lg">{tab.icon}</span>
-                  )}
-                  <span>{tab.label}</span>
-                </Link>
-              );
-            })}
-          </nav>
-          {showCheckout && <CheckoutModal onClose={() => setShowCheckout(false)} />}
-          {showHoldCart && <HoldCartModal onClose={() => setShowHoldCart(false)} />}
-          {showVoidModal && <VoidConfirmModal onClose={() => setShowVoidModal(false)} />}
-        </>
-      )}
+        {/* Row 2: Search bar — 64px */}
+        <div className="h-[64px] px-3 py-2 bg-slate-950 shrink-0 flex items-center">
+          <div className="relative w-full">
+            <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+            </svg>
+            <input type="text" ref={(el) => { if (el) el.focus(); }} placeholder="Search strains or products..."
+              className="w-full h-12 pl-10 pr-4 text-sm bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all" />
+          </div>
+        </div>
+
+        {/* Row 3: Results — fills remaining space */}
+        <div className="flex-1 overflow-y-auto bg-slate-950">
+          <ProductSearch />
+        </div>
+
+        {/* Row 4: Cart bar — 64px */}
+        <div className="h-[64px] flex items-center px-3 gap-2 bg-slate-900 border-t border-slate-800 shrink-0">
+          <button onClick={() => setCartOpenMobile(true)}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 hover:border-slate-600 transition-colors shrink-0">
+            <svg className="h-4 w-4 text-slate-300" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+            </svg>
+            <span className="text-sm font-medium text-slate-200">{itemCount}</span>
+          </button>
+          <span className="text-sm font-semibold tracking-tight whitespace-nowrap">R {subtotal.toFixed(2)}</span>
+          <button onClick={() => setShowCheckout(true)} disabled={items.length === 0}
+            className="flex-1 bg-emerald-500 hover:bg-emerald-400 py-2.5 rounded-lg font-semibold text-sm disabled:opacity-40 transition-all shadow-sm shadow-emerald-500/20 h-[48px]">
+            Checkout
+          </button>
+        </div>
+
+        {/* Row 5: Tab bar — 56px */}
+        <div className="h-[56px] flex bg-slate-900 border-t border-slate-800 shrink-0" style={{paddingBottom:'env(safe-area-inset-bottom, 0px)'}}>
+          {tabBarItems.map((tab) => {
+            const isActive = pathname === tab.href || pathname.startsWith(tab.href + '/');
+            return (
+              <Link key={tab.href} href={tab.href}
+                className={`flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors ${
+                  isActive ? 'text-emerald-400' : 'text-slate-500 hover:text-slate-300'
+                }`}
+              >
+                {tab.href === '/pos' ? (
+                  <div className="bg-white rounded-md p-0.5"><img src="/cannapay-logo.png" alt="POS" className="h-6 w-auto" /></div>
+                ) : (
+                  <span className="text-base">{tab.icon}</span>
+                )}
+                <span>{tab.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Overlays */}
+        <CartPanel isMobile={true} isOpen={cartOpenMobile} onClose={() => setCartOpenMobile(false)} />
+        {showCheckout && <CheckoutModal onClose={() => setShowCheckout(false)} />}
+        {showHoldCart && <HoldCartModal onClose={() => setShowHoldCart(false)} />}
+        {showVoidModal && <VoidConfirmModal onClose={() => setShowVoidModal(false)} />}
+      </div>
 
       {/* Bottom Bar — desktop only */}
       {!isMobile && (
