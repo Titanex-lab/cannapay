@@ -2,7 +2,7 @@ import https from 'https';
 
 const LEAFLY_API = 'consumer-api.leafly.com';
 
-interface LeaflyStrain {
+export interface LeaflyStrain {
   name: string;
   slug: string;
   category: string;

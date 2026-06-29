@@ -4,7 +4,27 @@ import { authenticate } from '../middleware/auth';
 import { requireRole } from '../middleware/roleGuard';
 import { validate } from '../middleware/validation';
 import * as strainService from '../services/strain.service';
-import { fetchLeaflyStrain } from '../services/leafly.service';
+import type { LeaflyStrain } from '../services/leafly.service';
+
+let fetchLeaflyStrain: ((query: string) => Promise<LeaflyStrain | null>) | null = null;
+
+async function getLeaflyStrain(query: string): Promise<LeaflyStrain | null> {
+  if (!fetchLeaflyStrain) {
+    try {
+      const mod = await import('../services/leafly.service');
+      fetchLeaflyStrain = mod.fetchLeaflyStrain;
+    } catch (err) {
+      console.error('[strains] Leafly service failed to load:', err);
+      return null;
+    }
+  }
+  try {
+    return await fetchLeaflyStrain(query);
+  } catch (err) {
+    console.error('[strains] Leafly lookup error:', err instanceof Error ? err.message : String(err));
+    return null;
+  }
+}
 
 const router = Router();
 
@@ -118,7 +138,7 @@ router.get(
       return;
     }
 
-    const strain = await fetchLeaflyStrain(query);
+    const strain = await getLeaflyStrain(query);
     res.json(strain);
   }),
 );
