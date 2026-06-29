@@ -77,17 +77,28 @@ router.get(
   }),
 );
 
-// ── GET /leafly — Leafly strain lookup (must be before /:id) ─────────
+// ── GET /leafly/search — Search Leafly for strain suggestions ─────────
+
+router.get(
+  '/leafly/search',
+  authenticate,
+  asyncHandler(async (req: Request, res: Response) => {
+    const query = req.query.q as string;
+    if (!query || query.length < 2) { res.json([]); return; }
+    const { searchLeaflyStrains } = await import('../services/leafly.service');
+    const results = await searchLeaflyStrains(query);
+    res.json(results);
+  }),
+);
+
+// ── GET /leafly — Leafly strain detail lookup (must be before /:id) ───
 
 router.get(
   '/leafly',
   authenticate,
   asyncHandler(async (req: Request, res: Response) => {
     const query = req.query.name as string;
-    if (!query || query.length < 2) {
-      res.json(null);
-      return;
-    }
+    if (!query || query.length < 2) { res.json(null); return; }
     const strain = await getLeaflyStrain(query);
     res.json(strain);
   }),

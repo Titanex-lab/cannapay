@@ -53,33 +53,23 @@ export default function StrainsPage() {
   const [leaflyQuery, setLeaflyQuery] = useState('');
   const [leaflyLoading, setLeaflyLoading] = useState(false);
   const [leaflyResult, setLeaflyResult] = useState<any>(null);
+  const [leaflySuggestions, setLeaflySuggestions] = useState<any[]>([]);
 
-  // Debounced Leafly search (direct to Leafly API, no backend)
+  // Debounced Leafly search (backend proxy)
   useEffect(() => {
-    if (leaflyQuery.length < 2) { setLeaflyResult(null); return; }
-    const slug = leaflyQuery.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    if (leaflyQuery.length < 2) { setLeaflyResult(null); setLeaflySuggestions([]); return; }
     const timer = setTimeout(async () => {
       setLeaflyLoading(true);
       try {
-        const res = await fetch(`https://consumer-api.leafly.com/api/strains/v1/${slug}`, {
-          headers: { 'Accept': 'application/json' },
-        });
-        if (!res.ok) { setLeaflyResult(null); return; }
-        const data = await res.json();
-        if (data?.name) {
-          setLeaflyResult({
-            name: data.name,
-            category: data.category || 'Hybrid',
-            thcPercent: data.cannabinoids?.thc?.percentile50 ?? null,
-            cbdPercent: data.cannabinoids?.cbd?.percentile50 ?? null,
-            description: data.description ? data.description.replace(/<[^>]*>/g, '').slice(0, 300) : '',
-          });
-        } else {
-          setLeaflyResult(null);
-        }
-      } catch { setLeaflyResult(null); }
+        // Detail lookup
+        const { data } = await api.get('/strains/leafly', { params: { name: leaflyQuery } });
+        setLeaflyResult(data);
+        // Suggestions
+        const { data: sugg } = await api.get('/strains/leafly/search', { params: { q: leaflyQuery } });
+        setLeaflySuggestions(sugg || []);
+      } catch { setLeaflyResult(null); setLeaflySuggestions([]); }
       finally { setLeaflyLoading(false); }
-    }, 600);
+    }, 500);
     return () => clearTimeout(timer);
   }, [leaflyQuery]);
 
@@ -266,6 +256,26 @@ export default function StrainsPage() {
                   <input value={leaflyQuery} onChange={e => setLeaflyQuery(e.target.value)}
                     className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:border-emerald-500"
                     placeholder="e.g. Blue Dream, Wedding Cake..." />
+                  {leaflySuggestions.length > 0 && !leaflyResult && (
+                    <div className="absolute z-10 mt-1 w-full bg-slate-800 border border-slate-600 rounded-lg shadow-xl overflow-hidden">
+                      {leaflySuggestions.map((s: any) => (
+                        <button key={s.slug} onClick={async () => {
+                          setLeaflyQuery(s.name);
+                          // Trigger detail fetch for this specific strain
+                          try {
+                            const { data } = await api.get('/strains/leafly', { params: { name: s.slug } });
+                            if (data?.name) {
+                              setLeaflyResult(data);
+                              setLeaflySuggestions([]);
+                            }
+                          } catch {}
+                        }} className="w-full text-left px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 border-b border-slate-700 last:border-0">
+                          <span className="font-medium text-white">{s.name}</span>
+                          <span className="ml-2 text-xs text-slate-500">{s.category}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   {leaflyLoading && <p className="text-xs text-slate-500 mt-1">Searching Leafly...</p>}
                   {leaflyResult && leaflyResult.name && (
                     <div className="mt-2 p-3 bg-slate-800/50 border border-emerald-500/30 rounded-lg">
