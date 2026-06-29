@@ -6,7 +6,8 @@ import { useAuth } from '@/hooks/useAuth';
 import toast from 'react-hot-toast';
 
 const HARDCODED_LOCATIONS = [
-  { id: '94aec37a-2eeb-4886-aaec-f5f287ecd3a1', name: 'CannaPay — Cape Town' },
+  { id: '16cf55b1-1bcb-4fd5-883b-104ff8ee9f4c', name: 'Linbro' },
+  { id: '4a14717e-f43a-4afd-96a2-b3d9da1b755d', name: 'Fourways' },
 ];
 
 export default function LoginPage() {
