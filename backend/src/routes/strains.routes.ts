@@ -77,6 +77,22 @@ router.get(
   }),
 );
 
+// ── GET /leafly — Leafly strain lookup (must be before /:id) ─────────
+
+router.get(
+  '/leafly',
+  authenticate,
+  asyncHandler(async (req: Request, res: Response) => {
+    const query = req.query.name as string;
+    if (!query || query.length < 2) {
+      res.json(null);
+      return;
+    }
+    const strain = await getLeaflyStrain(query);
+    res.json(strain);
+  }),
+);
+
 // ── GET /:id — Get single strain (budtender+) ────────────────────────
 
 router.get(
@@ -123,23 +139,6 @@ router.delete(
   asyncHandler(async (req: Request, res: Response) => {
     const result = await strainService.deleteStrain(req.params.id as string);
     res.json(result);
-  }),
-);
-
-// ── GET /leafly — Look up strain info from Leafly ────────────────────
-
-router.get(
-  '/leafly',
-  authenticate,
-  asyncHandler(async (req: Request, res: Response) => {
-    const query = req.query.name as string;
-    if (!query || query.length < 2) {
-      res.json(null);
-      return;
-    }
-
-    const strain = await getLeaflyStrain(query);
-    res.json(strain);
   }),
 );
 
