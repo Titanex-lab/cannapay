@@ -108,6 +108,12 @@ export function ProductSearch() {
     inputRef.current?.focus();
   };
 
+  const handleTap = (e: React.MouseEvent | React.TouchEvent, result: SearchResult) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleSelect(result);
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!isOpen || !data?.length) return;
 
@@ -189,11 +195,15 @@ export function ProductSearch() {
               const resolvedStock = getResolvedStock(result.productId, result.currentStock);
               const warning = getCartStockWarning(result.productId, resolvedStock);
               return (
-              <button
+              <div
                 key={result.productId}
                 data-result-index={i}
-                onClick={() => handleSelect(result)}
-                className={`w-full text-left p-4 rounded-xl mb-1.5 transition flex items-center justify-between min-h-[64px]
+                role="button"
+                tabIndex={0}
+                onClick={(e) => handleTap(e, result)}
+                onTouchEnd={(e) => handleTap(e, result)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleSelect(result); }}
+                className={`w-full text-left p-4 rounded-xl mb-1.5 transition flex items-center justify-between min-h-[64px] cursor-pointer
                   ${
                     i === highlightIndex
                       ? 'bg-emerald-600/20 border border-emerald-500/50'
@@ -222,7 +232,7 @@ export function ProductSearch() {
                     </div>
                   )}
                 </div>
-              </button>
+              </div>
               );
             })}
         </div>
