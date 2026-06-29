@@ -84,9 +84,9 @@ router.get(
   authenticate,
   asyncHandler(async (req: Request, res: Response) => {
     const query = req.query.q as string;
-    if (!query || query.length < 2) { res.json([]); return; }
+    if (!query || query.length < 1) { res.json([]); return; }
     const { searchLeaflyStrains } = await import('../services/leafly.service');
-    const results = await searchLeaflyStrains(query);
+    const results = searchLeaflyStrains(query);
     res.json(results);
   }),
 );
