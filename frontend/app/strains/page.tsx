@@ -26,6 +26,16 @@ const TYPE_COLORS: Record<string, string> = {
 export default function StrainsPage() {
   const queryClient = useQueryClient();
   const token = useAuthStore((s) => s.token);
+
+  // Resolve token with localStorage fallback
+  const getToken = () => {
+    if (token) return token;
+    try {
+      const raw = localStorage.getItem('auth-storage');
+      if (raw) return JSON.parse(raw)?.state?.token;
+    } catch {}
+    return null;
+  };
   const [modalOpen, setModalOpen] = useState(false);
   const [editingStrain, setEditingStrain] = useState<Strain | null>(null);
   const [saving, setSaving] = useState(false);
@@ -105,7 +115,8 @@ export default function StrainsPage() {
         aliases,
       };
       const headers: Record<string, string> = {};
-      if (token) headers.Authorization = `Bearer ${token}`;
+      const t = getToken();
+      if (t) headers.Authorization = `Bearer ${t}`;
 
       if (editingStrain) {
         await api.put(`/strains/${editingStrain.id}`, body, { headers });
