@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore, useCartStore } from '@/lib/store';
@@ -20,71 +20,55 @@ export default function POSPage() {
   const [showHoldCart, setShowHoldCart] = useState(false);
   const [showVoidModal, setShowVoidModal] = useState(false);
   const [cartOpenMobile, setCartOpenMobile] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
 
   useInventorySync();
-
-  // ── Mobile detection ──────────────────────────────────────────────────
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
-    check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
-  }, []);
 
   const user = useAuthStore((s) => s.user);
   const items = useCartStore((s) => s.items);
   const subtotal = useCartStore((s) => s.subtotal());
   const itemCount = useCartStore((s) => s.itemCount());
 
-  // ── Tab bar nav items (same as Layout.tsx) ───────────────────────────
   const userRole = user?.role ?? 'budtender';
   const tabBarItems = [
-    { href: '/pos', label: 'POS', icon: '\ud83c\udfea', roles: ['budtender', 'shift_manager', 'store_manager', 'admin'] },
-    { href: '/inventory', label: 'Inventory', icon: '\ud83d\udce6', roles: ['budtender', 'shift_manager', 'store_manager', 'admin'] },
-    { href: '/strains', label: 'Strains', icon: '\ud83e\uddec', roles: ['budtender', 'shift_manager', 'store_manager', 'admin'] },
-    { href: '/reports', label: 'Reports', icon: '\ud83d\udcca', roles: ['shift_manager', 'store_manager', 'admin'] },
-    { href: '/admin', label: 'Admin', icon: '\u2699\ufe0f', roles: ['admin'] },
+    { href: '/pos', label: 'POS', icon: '🏪', roles: ['budtender', 'shift_manager', 'store_manager', 'admin'] },
+    { href: '/inventory', label: 'Inventory', icon: '📦', roles: ['budtender', 'shift_manager', 'store_manager', 'admin'] },
+    { href: '/strains', label: 'Strains', icon: '🧬', roles: ['budtender', 'shift_manager', 'store_manager', 'admin'] },
+    { href: '/reports', label: 'Reports', icon: '📊', roles: ['shift_manager', 'store_manager', 'admin'] },
+    { href: '/admin', label: 'Admin', icon: '⚙️', roles: ['admin'] },
   ].filter((t) => t.roles.includes(userRole));
 
-  // Auto-open cart on mobile when first item added to empty cart
+  // Auto-open cart when first item added
   const prevLen = useRef(0);
-  useEffect(() => {
-    const len = items.length;
-    if (isMobile && len > 0 && prevLen.current === 0) {
-      setCartOpenMobile(true);
-    }
-    prevLen.current = len;
-  }, [isMobile, items]);
+  const cartLen = items.length;
+  if (cartLen > 0 && prevLen.current === 0) {
+    // Schedule state update after render via microtask
+    queueMicrotask(() => setCartOpenMobile(true));
+  }
+  prevLen.current = cartLen;
 
   return (
-    <div className="h-full flex flex-col bg-slate-950 text-white">
-      {/* Top Bar */}
-      <header className="h-12 border-b border-slate-800 flex items-center justify-between px-4 shrink-0 bg-slate-950">
-        <div className="flex items-center gap-2.5">
-          <div className="bg-white rounded-md px-1.5 py-0.5 flex-shrink-0">
-            <img src="/cannapay-logo.png" alt="CannaPay" className="h-10 w-auto" />
+    <>
+      {/* ═════════════ DESKTOP LAYOUT (≥768px) ═══════════════════════ */}
+      <div className="hidden md:flex h-full flex-col bg-slate-950 text-white">
+        <header className="h-12 border-b border-slate-800 flex items-center justify-between px-4 shrink-0 bg-slate-950">
+          <div className="flex items-center gap-2.5">
+            <div className="bg-white rounded-md px-1.5 py-0.5 flex-shrink-0">
+              <img src="/cannapay-logo.png" alt="CannaPay" className="h-10 w-auto" />
+            </div>
+            <span className="text-slate-700 hidden sm:inline">|</span>
+            <span className="text-xs text-slate-400 hidden sm:inline truncate max-w-[120px]">{user?.fullName ?? 'Unknown'}</span>
           </div>
-          <span className="text-slate-700 hidden sm:inline">|</span>
-          <span className="text-xs text-slate-400 hidden sm:inline truncate max-w-[120px]">{user?.fullName ?? 'Unknown'}</span>
-        </div>
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          {!isMobile && (
-            <>
-              <button onClick={() => setShowVoidModal(true)}
-                className="text-xs px-2.5 py-1 rounded-md bg-slate-900 border border-slate-700 text-red-400 hover:bg-red-500/10 hover:border-red-500/30 transition-colors">
-                Void/Refund
-              </button>
-              <HeldCartsButton />
-              <DrawerIndicator />
-            </>
-          )}
-          <LogoutButton />
-        </div>
-      </header>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <button onClick={() => setShowVoidModal(true)}
+              className="text-xs px-2.5 py-1 rounded-md bg-slate-900 border border-slate-700 text-red-400 hover:bg-red-500/10 hover:border-red-500/30 transition-colors">
+              Void/Refund
+            </button>
+            <HeldCartsButton />
+            <DrawerIndicator />
+            <LogoutButton />
+          </div>
+        </header>
 
-      {/* ── DESKTOP LAYOUT (>=768px) ─────────────────────────────────── */}
-      {!isMobile && (
         <main className="flex-1 flex overflow-hidden">
           <div className="flex-[3] flex flex-col overflow-hidden">
             <ProductSearch />
@@ -93,10 +77,25 @@ export default function POSPage() {
             <CartPanel isMobile={false} isOpen={true} onClose={() => {}} />
           </div>
         </main>
-      )}
 
-      {/* ── MOBILE LAYOUT (<768px) — exact 100dvh rows, zero overflow */}
-      <div className="h-[100dvh] flex flex-col md:hidden">
+        <footer className="h-14 border-t border-slate-800 flex items-center justify-between px-4 shrink-0 bg-slate-950">
+          <span className="text-slate-500 text-xs">Items: {itemCount}</span>
+          <div className="flex items-center gap-2.5">
+            <span className="text-lg font-semibold tracking-tight">R {subtotal.toFixed(2)}</span>
+            <button onClick={() => setShowHoldCart(true)} disabled={items.length === 0}
+              className="bg-slate-800 hover:bg-slate-700 px-3.5 py-2 rounded-lg text-xs font-medium disabled:opacity-40 transition-colors border border-slate-700">
+              Hold
+            </button>
+            <button onClick={() => setShowCheckout(true)} disabled={items.length === 0}
+              className="bg-emerald-500 hover:bg-emerald-400 px-6 py-2 rounded-lg font-semibold text-sm disabled:opacity-40 transition-all shadow-sm shadow-emerald-500/20">
+              Checkout
+            </button>
+          </div>
+        </footer>
+      </div>
+
+      {/* ═════════════ MOBILE LAYOUT (<768px) ═══════════════════════ */}
+      <div className="flex flex-col md:hidden h-[100dvh] bg-slate-950 text-white">
         {/* Row 1: Header — 52px */}
         <div className="h-[52px] flex items-center justify-between px-4 bg-slate-900 border-b border-slate-800 shrink-0">
           <div className="bg-white rounded-md px-1.5 py-0.5">
@@ -164,27 +163,6 @@ export default function POSPage() {
         {showHoldCart && <HoldCartModal onClose={() => setShowHoldCart(false)} />}
         {showVoidModal && <VoidConfirmModal onClose={() => setShowVoidModal(false)} />}
       </div>
-
-      {/* Bottom Bar — desktop only */}
-      {!isMobile && (
-        <footer className="h-14 border-t border-slate-800 flex items-center justify-between px-4 shrink-0 bg-slate-950">
-          <span className="text-slate-500 text-xs">Items: {itemCount}</span>
-          <div className="flex items-center gap-2.5">
-            <span className="text-lg font-semibold tracking-tight">R {subtotal.toFixed(2)}</span>
-            <button onClick={() => setShowHoldCart(true)} disabled={items.length === 0}
-              className="bg-slate-800 hover:bg-slate-700 px-3.5 py-2 rounded-lg text-xs font-medium disabled:opacity-40 transition-colors border border-slate-700">
-              Hold
-            </button>
-            <button onClick={() => setShowCheckout(true)} disabled={items.length === 0}
-              className="bg-emerald-500 hover:bg-emerald-400 px-6 py-2 rounded-lg font-semibold text-sm disabled:opacity-40 transition-all shadow-sm shadow-emerald-500/20">
-              Checkout
-            </button>
-          </div>
-        </footer>
-      )}
-
-
-
-    </div>
+    </>
   );
 }
