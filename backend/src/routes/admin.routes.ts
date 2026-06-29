@@ -215,27 +215,37 @@ router.post(
 router.post(
   '/seed',
   asyncHandler(async (req: Request, res: Response) => {
-    const existing = await prisma.strain.count();
-    if (existing > 0) {
-      res.json({ message: `Database already seeded (${existing} strains found). Skipping.` });
-      return;
-    }
+    // Clear existing data in correct order (respecting FK constraints)
+    await prisma.auditLog.deleteMany();
+    await prisma.cartHold.deleteMany();
+    await prisma.payment.deleteMany();
+    await prisma.transactionItem.deleteMany();
+    await prisma.transaction.deleteMany();
+    await prisma.inventoryAdjustment.deleteMany();
+    await prisma.inventory.deleteMany();
+    await prisma.cashDrawerSession.deleteMany();
+    await prisma.product.deleteMany();
+    await prisma.batch.deleteMany();
+    await prisma.strain.deleteMany();
+    await prisma.messagingLog.deleteMany();
+    await prisma.customer.deleteMany();
+    await prisma.user.deleteMany();
+    await prisma.location.deleteMany();
 
-    // Create location
-    const location = await prisma.location.create({
-      data: {
-        name: 'CannaPay — Cape Town',
-        address: '42 Long Street, Cape Town CBD, 8001',
-        licenseNumber: 'CT-DISP-2024-0042',
-      },
+    // Create locations
+    const linbro = await prisma.location.create({
+      data: { name: 'Linbro', address: '', licenseNumber: 'GP-DISP-2024-001' },
+    });
+    const fourways = await prisma.location.create({
+      data: { name: 'Fourways', address: '', licenseNumber: 'GP-DISP-2024-002' },
     });
 
     // Create users
     const bcrypt = await import('bcryptjs');
     const passwordHash = await bcrypt.hash('password123', 12);
-    const budtender = await prisma.user.create({ data: { email: 'sipho@greenleaf.co.za', passwordHash, fullName: 'Sipho Ndlovu', pin: '123456', role: 'budtender', locationId: location.id } });
-    const manager = await prisma.user.create({ data: { email: 'thandi@greenleaf.co.za', passwordHash, fullName: 'Thandi Mkhize', pin: '234567', role: 'shift_manager', locationId: location.id } });
-    const admin = await prisma.user.create({ data: { email: 'johan@greenleaf.co.za', passwordHash, fullName: 'Johan van der Merwe', pin: '345678', role: 'admin', locationId: location.id } });
+    const budtender = await prisma.user.create({ data: { email: 'sipho@greenleaf.co.za', passwordHash, fullName: 'Sipho Ndlovu', pin: '123456', role: 'budtender', locationId: linbro.id } });
+    const manager = await prisma.user.create({ data: { email: 'thandi@greenleaf.co.za', passwordHash, fullName: 'Thandi Mkhize', pin: '234567', role: 'shift_manager', locationId: linbro.id } });
+    const admin = await prisma.user.create({ data: { email: 'johan@greenleaf.co.za', passwordHash, fullName: 'Johan van der Merwe', pin: '345678', role: 'admin', locationId: linbro.id } });
 
     // 20 strains
     const strains = [
@@ -336,22 +346,29 @@ router.post(
       createdProducts.push(prod);
     }
 
-    // Inventory
+    // Inventory for Linbro
     for (const prod of createdProducts) {
       await prisma.inventory.create({
-        data: { productId: prod.id, locationId: location.id, quantity: prod.sku.startsWith('ACC') ? 30 : 20, reorderPoint: 5 },
+        data: { productId: prod.id, locationId: linbro.id, quantity: prod.sku.startsWith('ACC') ? 30 : 20, reorderPoint: 5 },
+      });
+    }
+    // Inventory for Fourways (same products, slightly different quantities)
+    for (const prod of createdProducts) {
+      await prisma.inventory.create({
+        data: { productId: prod.id, locationId: fourways.id, quantity: prod.sku.startsWith('ACC') ? 25 : 15, reorderPoint: 5 },
       });
     }
 
     res.json({
       message: 'Database seeded successfully',
+      locations: { linbro: linbro.id, fourways: fourways.id },
       counts: {
-        locations: 1,
+        locations: 2,
         users: 3,
         strains: createdStrains.length,
         batches: batches.length,
         products: createdProducts.length,
-        inventory: createdProducts.length,
+        inventory: createdProducts.length * 2,
       },
     });
   }),
