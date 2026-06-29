@@ -28,6 +28,37 @@ function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, '').replace(/&[^;]+;/g, '').trim();
 }
 
+function extractDescription(data: any): string {
+  const parts: string[] = [];
+
+  // Description text
+  const desc = data.description ? stripHtml(data.description).slice(0, 200) : '';
+  if (desc) parts.push(desc);
+
+  // Top effect
+  if (data.topEffect) parts.push(`Top effect: ${data.topEffect}`);
+
+  // Terpenes (comma-separated names from topTerps or terps)
+  const terps = data.topTerps || data.terps;
+  if (terps && typeof terps === 'object') {
+    const names = Object.values(terps).map((t: any) => t.name).join(', ');
+    if (names) parts.push(`Terpenes: ${names}`);
+  }
+
+  // Flavors
+  const flavors = data.flavors;
+  if (flavors && typeof flavors === 'object') {
+    const top = Object.values(flavors)
+      .sort((a: any, b: any) => Math.abs(b.score) - Math.abs(a.score))
+      .slice(0, 5)
+      .map((f: any) => f.name)
+      .join(', ');
+    if (top) parts.push(`Flavors: ${top}`);
+  }
+
+  return parts.join(' · ');
+}
+
 function httpGet(path: string): Promise<any> {
   return new Promise((resolve, reject) => {
     const req = https.get({ hostname: LEAFLY_HOST, path, headers: HEADERS, timeout: 8000 }, (res) => {
@@ -62,7 +93,7 @@ export async function fetchLeaflyStrain(query: string): Promise<LeaflyStrain | n
       category: data.category || 'Hybrid',
       thcPercent: data.cannabinoids?.thc?.percentile50 ?? null,
       cbdPercent: data.cannabinoids?.cbd?.percentile50 ?? null,
-      description: data.description ? stripHtml(data.description).slice(0, 300) : '',
+      description: extractDescription(data),
       topEffect: data.topEffect || null,
     };
     cache.set(slug, { data: strain, ts: Date.now() });

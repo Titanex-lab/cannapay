@@ -69,7 +69,7 @@ export default function StrainsPage() {
         setLeaflySuggestions(sugg || []);
       } catch { setLeaflyResult(null); setLeaflySuggestions([]); }
       finally { setLeaflyLoading(false); }
-    }, 500);
+    }, 300);
     return () => clearTimeout(timer);
   }, [leaflyQuery]);
 
@@ -288,6 +288,7 @@ export default function StrainsPage() {
                         if (t === 'indica' || t === 'sativa' || t === 'hybrid') setType(t);
                         if (leaflyResult.thcPercent != null) setThcPercent(String(leaflyResult.thcPercent));
                         if (leaflyResult.cbdPercent != null) setCbdPercent(String(leaflyResult.cbdPercent));
+                        if (leaflyResult.description) setTerpeneProfile(leaflyResult.description);
                         setLeaflyResult(null);
                         setLeaflyQuery('');
                         toast.success('Strain info loaded from Leafly');
