@@ -4,6 +4,7 @@ import { authenticate } from '../middleware/auth';
 import { requireRole } from '../middleware/roleGuard';
 import { validate } from '../middleware/validation';
 import * as strainService from '../services/strain.service';
+import { fetchLeaflyStrain } from '../services/leafly.service';
 
 const router = Router();
 
@@ -117,7 +118,6 @@ router.get(
       return;
     }
 
-    const { fetchLeaflyStrain } = await import('../services/leafly.service');
     const strain = await fetchLeaflyStrain(query);
     res.json(strain);
   }),
