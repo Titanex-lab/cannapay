@@ -105,4 +105,22 @@ router.delete(
   }),
 );
 
+// ── GET /leafly — Look up strain info from Leafly ────────────────────
+
+router.get(
+  '/leafly',
+  authenticate,
+  asyncHandler(async (req: Request, res: Response) => {
+    const query = req.query.name as string;
+    if (!query || query.length < 2) {
+      res.json(null);
+      return;
+    }
+
+    const { fetchLeaflyStrain } = await import('../services/leafly.service');
+    const strain = await fetchLeaflyStrain(query);
+    res.json(strain);
+  }),
+);
+
 export default router;

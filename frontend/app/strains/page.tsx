@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
@@ -48,6 +48,25 @@ export default function StrainsPage() {
   const [terpeneProfile, setTerpeneProfile] = useState('');
   const [aliasInput, setAliasInput] = useState('');
   const [aliases, setAliases] = useState<string[]>([]);
+
+  // Leafly lookup
+  const [leaflyQuery, setLeaflyQuery] = useState('');
+  const [leaflyLoading, setLeaflyLoading] = useState(false);
+  const [leaflyResult, setLeaflyResult] = useState<any>(null);
+
+  // Debounced Leafly search
+  useEffect(() => {
+    if (leaflyQuery.length < 2) { setLeaflyResult(null); return; }
+    const timer = setTimeout(async () => {
+      setLeaflyLoading(true);
+      try {
+        const { data } = await api.get('/strains/leafly', { params: { name: leaflyQuery } });
+        setLeaflyResult(data);
+      } catch { setLeaflyResult(null); }
+      finally { setLeaflyLoading(false); }
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [leaflyQuery]);
 
   const { data: strains = [], isLoading, isError } = useQuery<Strain[]>({
     queryKey: ['strains'],
@@ -226,6 +245,36 @@ export default function StrainsPage() {
             <div className="p-6">
               <h2 className="text-lg font-bold text-white mb-4">{editingStrain ? 'Edit Strain' : 'New Strain'}</h2>
               <div className="space-y-4">
+                {/* Leafly lookup */}
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">Search Leafly for strain info</label>
+                  <input value={leaflyQuery} onChange={e => setLeaflyQuery(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:border-emerald-500"
+                    placeholder="e.g. Blue Dream, Wedding Cake..." />
+                  {leaflyLoading && <p className="text-xs text-slate-500 mt-1">Searching Leafly...</p>}
+                  {leaflyResult && leaflyResult.name && (
+                    <div className="mt-2 p-3 bg-slate-800/50 border border-emerald-500/30 rounded-lg">
+                      <p className="text-sm font-medium text-emerald-400">{leaflyResult.name}</p>
+                      <p className="text-xs text-slate-400 mt-0.5">{leaflyResult.category} · THC {leaflyResult.thcPercent}% · CBD {leaflyResult.cbdPercent}%</p>
+                      {leaflyResult.description && <p className="text-xs text-slate-500 mt-1 line-clamp-2">{leaflyResult.description}</p>}
+                      <button onClick={() => {
+                        setName(leaflyResult.name);
+                        const t = leaflyResult.category?.toLowerCase();
+                        if (t === 'indica' || t === 'sativa' || t === 'hybrid') setType(t);
+                        if (leaflyResult.thcPercent != null) setThcPercent(String(leaflyResult.thcPercent));
+                        if (leaflyResult.cbdPercent != null) setCbdPercent(String(leaflyResult.cbdPercent));
+                        setLeaflyResult(null);
+                        setLeaflyQuery('');
+                        toast.success('Strain info loaded from Leafly');
+                      }} className="mt-2 text-xs bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 rounded font-medium transition-colors">
+                        Fill Form
+                      </button>
+                    </div>
+                  )}
+                  {leaflyResult && !leaflyResult.name && leaflyQuery.length >= 2 && !leaflyLoading && (
+                    <p className="text-xs text-slate-600 mt-1">No match found on Leafly</p>
+                  )}
+                </div>
                 <div>
                   <label className="block text-sm text-slate-400 mb-1">Name</label>
                   <input value={name} onChange={e => setName(e.target.value)} className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:border-emerald-500" placeholder="e.g. Wedding Cake" />
