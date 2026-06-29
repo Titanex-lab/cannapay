@@ -73,6 +73,7 @@ export default function LoginPage() {
   const submitPin = useCallback(
     async (pinDigits: string) => {
       setPinLoading(true);
+      console.log('[PIN login] Sending payload:', JSON.stringify({ pin: pinDigits, locationId }));
       try {
         await loginWithPin(pinDigits, locationId);
         toast.success('Logged in');
