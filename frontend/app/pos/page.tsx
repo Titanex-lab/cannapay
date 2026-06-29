@@ -58,9 +58,9 @@ export default function POSPage() {
   }, [isMobile, items]);
 
   return (
-    <div className="h-full flex flex-col bg-slate-950 text-white">
+    <div className={`flex flex-col bg-slate-950 text-white ${isMobile ? 'h-[100dvh] overflow-hidden fixed inset-0' : 'h-full'}`}>
       {/* Top Bar */}
-      <header className="h-12 border-b border-slate-800 flex items-center justify-between px-4 shrink-0 bg-slate-950">
+      <header className={`border-b border-slate-800 flex items-center justify-between px-4 bg-slate-950 shrink-0 ${isMobile ? 'h-12 fixed top-0 left-0 right-0 z-30' : 'h-12'}`}>
         <div className="flex items-center gap-2.5">
           <div className="bg-white rounded-md px-1.5 py-0.5 flex-shrink-0">
             <img src="/cannapay-logo.png" alt="CannaPay" className="h-10 w-auto" />
@@ -97,7 +97,7 @@ export default function POSPage() {
 
       {/* ── MOBILE LAYOUT (<768px) ───────────────────────────────────── */}
       {isMobile && (
-        <main className="flex-1 flex flex-col overflow-hidden pb-[104px]">
+        <main className="flex-1 flex flex-col overflow-hidden mt-12 pb-[104px]">
           <div className="flex-1 flex flex-col overflow-hidden">
             <ProductSearch />
           </div>
@@ -106,7 +106,7 @@ export default function POSPage() {
 
       {/* Bottom Bar — fixed on mobile, inline on desktop */}
       {isMobile ? (
-        <footer className="fixed bottom-[48px] left-0 right-0 z-30 h-14 border-t border-slate-800 flex items-center justify-between px-3 bg-slate-950 safe-bottom">
+        <footer className="fixed bottom-[48px] left-0 right-0 z-50 h-14 border-t border-slate-800 flex items-center justify-between px-3 bg-slate-950">
           <button
             onClick={() => setCartOpenMobile(true)}
             className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 transition-colors"
