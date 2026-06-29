@@ -105,7 +105,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Logo */}
       <div className="px-4 py-3">
         <div className="bg-white rounded-lg p-1.5 inline-block">
-          <img src="/cannapay-logo.png" alt="CannaPay" className="w-28 h-auto" />
+          <img src="/cannapay-logo.png" alt="CannaPay" className="w-36 h-auto" />
         </div>
       </div>
 

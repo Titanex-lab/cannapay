@@ -63,7 +63,7 @@ export default function POSPage() {
       <header className="h-12 border-b border-slate-800 flex items-center justify-between px-4 shrink-0 bg-slate-950">
         <div className="flex items-center gap-2.5">
           <div className="bg-white rounded-md px-1.5 py-0.5 flex-shrink-0">
-            <img src="/cannapay-logo.png" alt="CannaPay" className="h-5 w-auto" />
+            <img src="/cannapay-logo.png" alt="CannaPay" className="h-10 w-auto" />
           </div>
           <span className="text-slate-700 hidden sm:inline">|</span>
           <span className="text-xs text-slate-400 hidden sm:inline truncate max-w-[120px]">{user?.fullName ?? 'Unknown'}</span>
