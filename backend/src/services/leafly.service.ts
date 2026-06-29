@@ -24,6 +24,10 @@ function stripHtml(html: string): string {
 }
 
 export async function fetchLeaflyStrain(query: string): Promise<LeaflyStrain | null> {
+  return searchStrains(query);
+}
+
+async function searchStrains(query: string): Promise<LeaflyStrain | null> {
   const slug = slugify(query);
   if (!slug) return null;
 
