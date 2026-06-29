@@ -1,40 +1,30 @@
-const CACHE = 'cannapay-v1';
+// Cache version — bumped on every deploy to invalidate old caches
+const CACHE = 'cannapay-' + Date.now();
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE).then((cache) => {
-      return cache.addAll([
-        '/',
-        '/pos',
-        '/login',
-        '/manifest.json',
-        '/cannapay-logo.png',
-      ]);
-    })
-  );
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))
-      );
-    })
+    caches.keys().then((keys) =>
+      Promise.all(keys.map((k) => caches.delete(k)))
+    )
   );
   self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
+  // Network-first for HTML, cache for static assets
+  if (event.request.mode === 'navigate') {
+    event.respondWith(fetch(event.request).catch(() =>
+      caches.match(event.request)
+    ));
+    return;
+  }
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      return cached || fetch(event.request).catch(() => {
-        return new Response('Offline — please check your connection', {
-          status: 503,
-          headers: { 'Content-Type': 'text/plain' },
-        });
-      });
-    })
+    caches.match(event.request).then((cached) =>
+      cached || fetch(event.request)
+    )
   );
 });
