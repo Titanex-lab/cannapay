@@ -58,9 +58,9 @@ export default function POSPage() {
   }, [isMobile, items]);
 
   return (
-    <div className={`flex flex-col bg-slate-950 text-white ${isMobile ? 'h-[100dvh] overflow-hidden fixed inset-0' : 'h-full'}`}>
+    <div className="h-full flex flex-col bg-slate-950 text-white">
       {/* Top Bar */}
-      <header className={`border-b border-slate-800 flex items-center justify-between px-4 bg-slate-950 shrink-0 ${isMobile ? 'h-12 fixed top-0 left-0 right-0 z-30' : 'h-12'}`}>
+      <header className="h-12 border-b border-slate-800 flex items-center justify-between px-4 shrink-0 bg-slate-950">
         <div className="flex items-center gap-2.5">
           <div className="bg-white rounded-md px-1.5 py-0.5 flex-shrink-0">
             <img src="/cannapay-logo.png" alt="CannaPay" className="h-10 w-auto" />
@@ -95,36 +95,59 @@ export default function POSPage() {
         </main>
       )}
 
-      {/* ── MOBILE LAYOUT (<768px) ───────────────────────────────────── */}
+      {/* ── MOBILE LAYOUT (<768px) — iOS-safe flex */}
       {isMobile && (
-        <main className="flex-1 flex flex-col overflow-hidden mt-12 pb-[104px]">
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <ProductSearch />
+        <>
+          <div style={{position:'fixed', inset:0, bottom:48, display:'flex', flexDirection:'column', zIndex:10}}>
+            <div className="h-12 border-b border-slate-800 flex items-center justify-between px-3 bg-slate-950" style={{flexShrink:0}}>
+              <div className="bg-white rounded-md px-1.5 py-0.5">
+                <img src="/cannapay-logo.png" alt="CannaPay" className="h-8 w-auto" />
+              </div>
+              <LogoutButton />
+            </div>
+            <div style={{flex:1, overflowY:'auto', WebkitOverflowScrolling:'touch'}}>
+              <ProductSearch />
+            </div>
+            <div className="h-14 border-t border-slate-800 flex items-center justify-between px-3 bg-slate-950" style={{flexShrink:0, paddingBottom:'env(safe-area-inset-bottom, 0px)'}}>
+              <button onClick={() => setCartOpenMobile(true)} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 transition-colors">
+                <svg className="h-4 w-4 text-slate-300" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /></svg>
+                <span className="text-sm font-medium text-slate-200">{itemCount}</span>
+              </button>
+              <div className="flex items-center gap-2 flex-1 ml-3">
+                <span className="text-sm font-semibold tracking-tight whitespace-nowrap">R {subtotal.toFixed(2)}</span>
+                <button onClick={() => setShowCheckout(true)} disabled={items.length === 0} className="flex-1 bg-emerald-500 hover:bg-emerald-400 py-3 rounded-lg font-semibold text-sm disabled:opacity-40 transition-all shadow-sm shadow-emerald-500/20 min-h-[52px]">Checkout</button>
+              </div>
+            </div>
           </div>
-        </main>
+
+          <CartPanel isMobile={true} isOpen={cartOpenMobile} onClose={() => setCartOpenMobile(false)} />
+          <nav className="fixed bottom-0 left-0 right-0 z-40 flex border-t border-slate-800 bg-slate-950" style={{paddingBottom:'env(safe-area-inset-bottom, 0px)'}}>
+            {tabBarItems.map((tab) => {
+              const isActive = pathname === tab.href || pathname.startsWith(tab.href + '/');
+              return (
+                <Link key={tab.href} href={tab.href}
+                  className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors min-h-[48px] ${
+                    isActive ? 'text-emerald-400' : 'text-slate-500 hover:text-slate-300'
+                  }`}
+                >
+                  {tab.href === '/pos' ? (
+                    <div className="bg-white rounded-md p-0.5"><img src="/cannapay-logo.png" alt="POS" className="h-7 w-auto" /></div>
+                  ) : (
+                    <span className="text-lg">{tab.icon}</span>
+                  )}
+                  <span>{tab.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+          {showCheckout && <CheckoutModal onClose={() => setShowCheckout(false)} />}
+          {showHoldCart && <HoldCartModal onClose={() => setShowHoldCart(false)} />}
+          {showVoidModal && <VoidConfirmModal onClose={() => setShowVoidModal(false)} />}
+        </>
       )}
 
-      {/* Bottom Bar — fixed on mobile, inline on desktop */}
-      {isMobile ? (
-        <footer className="fixed bottom-[48px] left-0 right-0 z-50 h-14 border-t border-slate-800 flex items-center justify-between px-3 bg-slate-950">
-          <button
-            onClick={() => setCartOpenMobile(true)}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 transition-colors"
-          >
-            <svg className="h-4 w-4 text-slate-300" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-            </svg>
-            <span className="text-sm font-medium text-slate-200">{itemCount}</span>
-          </button>
-          <div className="flex items-center gap-2 flex-1 ml-3">
-            <span className="text-base font-semibold tracking-tight whitespace-nowrap">R {subtotal.toFixed(2)}</span>
-            <button onClick={() => setShowCheckout(true)} disabled={items.length === 0}
-              className="flex-1 bg-emerald-500 hover:bg-emerald-400 py-3 rounded-lg font-semibold text-sm disabled:opacity-40 transition-all shadow-sm shadow-emerald-500/20 min-h-[52px]">
-              Checkout
-            </button>
-          </div>
-        </footer>
-      ) : (
+      {/* Bottom Bar — desktop only */}
+      {!isMobile && (
         <footer className="h-14 border-t border-slate-800 flex items-center justify-between px-4 shrink-0 bg-slate-950">
           <span className="text-slate-500 text-xs">Items: {itemCount}</span>
           <div className="flex items-center gap-2.5">
@@ -141,44 +164,8 @@ export default function POSPage() {
         </footer>
       )}
 
-      {/* Mobile Cart Bottom Sheet — rendered outside main layout */}
-      {isMobile && (
-        <CartPanel isMobile={true} isOpen={cartOpenMobile} onClose={() => setCartOpenMobile(false)} />
-      )}
 
-      {/* Modals */}
-      {showCheckout && <CheckoutModal onClose={() => setShowCheckout(false)} />}
-      {showHoldCart && <HoldCartModal onClose={() => setShowHoldCart(false)} />}
-      {showVoidModal && <VoidConfirmModal onClose={() => setShowVoidModal(false)} />}
 
-      {/* ── Mobile Tab Bar ────────────────────────────────────────────── */}
-      {isMobile && (
-        <nav className="fixed bottom-0 left-0 right-0 z-40 flex border-t border-slate-800 bg-slate-950 safe-bottom">
-          {tabBarItems.map((tab) => {
-            const isActive = pathname === tab.href || pathname.startsWith(tab.href + '/');
-            return (
-              <Link
-                key={tab.href}
-                href={tab.href}
-                className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors min-h-[48px] ${
-                  isActive
-                    ? 'text-emerald-400'
-                    : 'text-slate-500 hover:text-slate-300'
-                }`}
-              >
-                {tab.href === '/pos' ? (
-                  <div className="bg-white rounded-md p-0.5">
-                    <img src="/cannapay-logo.png" alt="POS" className="h-7 w-auto" />
-                  </div>
-                ) : (
-                  <span className="text-lg">{tab.icon}</span>
-                )}
-                <span>{tab.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
-      )}
     </div>
   );
 }
