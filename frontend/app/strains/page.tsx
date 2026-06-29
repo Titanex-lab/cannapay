@@ -54,14 +54,29 @@ export default function StrainsPage() {
   const [leaflyLoading, setLeaflyLoading] = useState(false);
   const [leaflyResult, setLeaflyResult] = useState<any>(null);
 
-  // Debounced Leafly search
+  // Debounced Leafly search (direct to Leafly API, no backend)
   useEffect(() => {
     if (leaflyQuery.length < 2) { setLeaflyResult(null); return; }
+    const slug = leaflyQuery.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     const timer = setTimeout(async () => {
       setLeaflyLoading(true);
       try {
-        const { data } = await api.get('/strains/leafly', { params: { name: leaflyQuery } });
-        setLeaflyResult(data);
+        const res = await fetch(`https://consumer-api.leafly.com/api/strains/v1/${slug}`, {
+          headers: { 'Accept': 'application/json' },
+        });
+        if (!res.ok) { setLeaflyResult(null); return; }
+        const data = await res.json();
+        if (data?.name) {
+          setLeaflyResult({
+            name: data.name,
+            category: data.category || 'Hybrid',
+            thcPercent: data.cannabinoids?.thc?.percentile50 ?? null,
+            cbdPercent: data.cannabinoids?.cbd?.percentile50 ?? null,
+            description: data.description ? data.description.replace(/<[^>]*>/g, '').slice(0, 300) : '',
+          });
+        } else {
+          setLeaflyResult(null);
+        }
       } catch { setLeaflyResult(null); }
       finally { setLeaflyLoading(false); }
     }, 600);
