@@ -171,7 +171,7 @@ export function ProductSearch() {
 
       {/* Results dropdown */}
       {isOpen && query.length >= 2 && (
-        <div ref={listRef} className="flex-1 overflow-y-auto px-4 pb-4">
+        <div ref={listRef} className="flex-1 overflow-y-auto px-3 pb-24 md:pb-4">
           {isLoading && (
             <div className="text-slate-400 text-center py-8">
               <span className="animate-pulse">Searching...</span>
@@ -193,11 +193,11 @@ export function ProductSearch() {
                 key={result.productId}
                 data-result-index={i}
                 onClick={() => handleSelect(result)}
-                className={`w-full text-left p-3 rounded-lg mb-1 transition flex items-center justify-between
+                className={`w-full text-left p-4 rounded-xl mb-1.5 transition flex items-center justify-between min-h-[64px]
                   ${
                     i === highlightIndex
                       ? 'bg-emerald-600/20 border border-emerald-500/50'
-                      : 'hover:bg-slate-800 border border-transparent'
+                      : 'hover:bg-slate-800 border border-transparent active:bg-slate-700'
                   }`}
               >
                 <div className="min-w-0 flex-1">
