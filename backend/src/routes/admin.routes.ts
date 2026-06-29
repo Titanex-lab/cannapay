@@ -242,10 +242,10 @@ router.post(
 
     // Create users
     const bcrypt = await import('bcryptjs');
-    const passwordHash = await bcrypt.hash('password123', 12);
-    const budtender = await prisma.user.create({ data: { email: 'sipho@greenleaf.co.za', passwordHash, fullName: 'Sipho Ndlovu', pin: '123456', role: 'budtender', locationId: linbro.id } });
-    const manager = await prisma.user.create({ data: { email: 'thandi@greenleaf.co.za', passwordHash, fullName: 'Thandi Mkhize', pin: '234567', role: 'shift_manager', locationId: linbro.id } });
-    const admin = await prisma.user.create({ data: { email: 'johan@greenleaf.co.za', passwordHash, fullName: 'Johan van der Merwe', pin: '345678', role: 'admin', locationId: linbro.id } });
+    const passwordHash = await bcrypt.hash('CannaPay2024!', 12);
+    const costello = await prisma.user.create({ data: { email: 'costello@cannapay.app', passwordHash, fullName: 'Costello', pin: '000000', role: 'admin', locationId: linbro.id } });
+    const maury = await prisma.user.create({ data: { email: 'maury@cannapay.app', passwordHash, fullName: 'Maury', pin: '000000', role: 'admin', locationId: linbro.id } });
+    const djemba = await prisma.user.create({ data: { email: 'djemba@cannapay.app', passwordHash, fullName: 'Djemba', pin: '000000', role: 'admin', locationId: fourways.id } });
 
     // 20 strains
     const strains = [
