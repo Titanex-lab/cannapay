@@ -256,9 +256,9 @@ router.post(
     // Create users
     const bcrypt = await import('bcryptjs');
     const passwordHash = await bcrypt.hash('CannaPay2024!', 12);
-    const costello = await prisma.user.create({ data: { email: 'costello@cannapay.app', passwordHash, fullName: 'Costello', pin: '000000', role: 'admin', locationId: linbro.id } });
+    const costello = await prisma.user.create({ data: { email: 'costello@cannapay.app', passwordHash, fullName: 'Costello', pin: '111111', role: 'admin', locationId: linbro.id } });
     const maury = await prisma.user.create({ data: { email: 'maury@cannapay.app', passwordHash, fullName: 'Maury', pin: '000000', role: 'admin', locationId: linbro.id } });
-    const djemba = await prisma.user.create({ data: { email: 'djemba@cannapay.app', passwordHash, fullName: 'Djemba', pin: '000000', role: 'admin', locationId: fourways.id } });
+    const djemba = await prisma.user.create({ data: { email: 'djemba@cannapay.app', passwordHash, fullName: 'Djemba', pin: '222222', role: 'admin', locationId: fourways.id } });
 
     // 20 strains
     const strains = [
