@@ -215,10 +215,11 @@ router.post(
 router.get(
   '/diagnostic',
   asyncHandler(async (req: Request, res: Response) => {
-    const users = await prisma.user.findMany({ select: { email: true, fullName: true, role: true, isActive: true } });
+    const users = await prisma.user.findMany({ select: { email: true, fullName: true, role: true, isActive: true, locationId: true, pin: true } });
     const count = await prisma.user.count();
     const strains = await prisma.strain.count();
-    res.json({ userCount: count, strains, users });
+    const locations = await prisma.location.findMany({ select: { id: true, name: true } });
+    res.json({ userCount: count, strains, locations, users });
   }),
 );
 
