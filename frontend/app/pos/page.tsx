@@ -97,51 +97,49 @@ export default function POSPage() {
 
       {/* ── MOBILE LAYOUT (<768px) ───────────────────────────────────── */}
       {isMobile && (
-        <main className="flex-1 flex flex-col overflow-hidden pb-14">
+        <main className="flex-1 flex flex-col overflow-hidden pb-[104px]">
           <div className="flex-1 flex flex-col overflow-hidden">
             <ProductSearch />
           </div>
         </main>
       )}
 
-      {/* Bottom Bar (shared) */}
-      <footer className="h-14 border-t border-slate-800 flex items-center justify-between px-4 shrink-0 bg-slate-950">
-        {isMobile ? (
-          <>
-            <button
-              onClick={() => setCartOpenMobile(true)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 transition-colors"
-            >
-              <svg className="h-4 w-4 text-slate-300" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-              </svg>
-              <span className="text-sm font-medium text-slate-200">{itemCount}</span>
+      {/* Bottom Bar — fixed on mobile, inline on desktop */}
+      {isMobile ? (
+        <footer className="fixed bottom-[48px] left-0 right-0 z-30 h-14 border-t border-slate-800 flex items-center justify-between px-3 bg-slate-950 safe-bottom">
+          <button
+            onClick={() => setCartOpenMobile(true)}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 transition-colors"
+          >
+            <svg className="h-4 w-4 text-slate-300" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+            </svg>
+            <span className="text-sm font-medium text-slate-200">{itemCount}</span>
+          </button>
+          <div className="flex items-center gap-2 flex-1 ml-3">
+            <span className="text-base font-semibold tracking-tight whitespace-nowrap">R {subtotal.toFixed(2)}</span>
+            <button onClick={() => setShowCheckout(true)} disabled={items.length === 0}
+              className="flex-1 bg-emerald-500 hover:bg-emerald-400 py-3 rounded-lg font-semibold text-sm disabled:opacity-40 transition-all shadow-sm shadow-emerald-500/20 min-h-[52px]">
+              Checkout
             </button>
-            <div className="flex items-center gap-2">
-              <span className="text-base font-semibold tracking-tight">R {subtotal.toFixed(2)}</span>
-              <button onClick={() => setShowCheckout(true)} disabled={items.length === 0}
-                className="bg-emerald-500 hover:bg-emerald-400 px-5 py-2.5 rounded-lg font-semibold text-sm disabled:opacity-40 transition-all shadow-sm shadow-emerald-500/20 min-h-[44px]">
-                Checkout
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
-            <span className="text-slate-500 text-xs">Items: {itemCount}</span>
-            <div className="flex items-center gap-2.5">
-              <span className="text-lg font-semibold tracking-tight">R {subtotal.toFixed(2)}</span>
-              <button onClick={() => setShowHoldCart(true)} disabled={items.length === 0}
-                className="bg-slate-800 hover:bg-slate-700 px-3.5 py-2 rounded-lg text-xs font-medium disabled:opacity-40 transition-colors border border-slate-700">
-                Hold
-              </button>
-              <button onClick={() => setShowCheckout(true)} disabled={items.length === 0}
-                className="bg-emerald-500 hover:bg-emerald-400 px-6 py-2 rounded-lg font-semibold text-sm disabled:opacity-40 transition-all shadow-sm shadow-emerald-500/20">
-                Checkout
-              </button>
-            </div>
-          </>
-        )}
-      </footer>
+          </div>
+        </footer>
+      ) : (
+        <footer className="h-14 border-t border-slate-800 flex items-center justify-between px-4 shrink-0 bg-slate-950">
+          <span className="text-slate-500 text-xs">Items: {itemCount}</span>
+          <div className="flex items-center gap-2.5">
+            <span className="text-lg font-semibold tracking-tight">R {subtotal.toFixed(2)}</span>
+            <button onClick={() => setShowHoldCart(true)} disabled={items.length === 0}
+              className="bg-slate-800 hover:bg-slate-700 px-3.5 py-2 rounded-lg text-xs font-medium disabled:opacity-40 transition-colors border border-slate-700">
+              Hold
+            </button>
+            <button onClick={() => setShowCheckout(true)} disabled={items.length === 0}
+              className="bg-emerald-500 hover:bg-emerald-400 px-6 py-2 rounded-lg font-semibold text-sm disabled:opacity-40 transition-all shadow-sm shadow-emerald-500/20">
+              Checkout
+            </button>
+          </div>
+        </footer>
+      )}
 
       {/* Mobile Cart Bottom Sheet — rendered outside main layout */}
       {isMobile && (
