@@ -163,7 +163,7 @@ model TransactionItem {
   id             String      @id @default(uuid()) @db.Uuid
   transactionId  String      @map("transaction_id") @db.Uuid
   productId      String      @map("product_id") @db.Uuid
-  batchId        String      @map("batch_id") @db.Uuid
+  batchId        String?     @map("batch_id") @db.Uuid
   quantity       Decimal     @db.Decimal(10, 3)
   unitPrice      Decimal     @map("unit_price") @db.Decimal(10, 2)
   discountAmount Decimal     @default(0) @map("discount_amount") @db.Decimal(10, 2)
@@ -171,7 +171,7 @@ model TransactionItem {
   taxRate        Decimal     @map("tax_rate") @db.Decimal(5, 3)
   total          Decimal     @db.Decimal(10, 2)
   createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
-  batch          Batch       @relation(fields: [batchId], references: [id])
+  batch          Batch?      @relation(fields: [batchId], references: [id])
   product        Product     @relation(fields: [productId], references: [id])
   transaction    Transaction @relation(fields: [transactionId], references: [id])
 

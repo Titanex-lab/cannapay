@@ -152,7 +152,7 @@ export async function createTransaction(
   // 3. Resolve each cart item against the database
   const lineItems: Array<{
     productId: string;
-    batchId: string;
+    batchId: string | null;
     taxCategory: string;
     quantity: number;
     unitPrice: number;
@@ -191,10 +191,10 @@ export async function createTransaction(
       );
     }
 
-    // batch_id is required for traceability
+    // batch is preferred for traceability but not required
     if (!product.batchId) {
-      throw new ValidationError(
-        `Product "${product.name}" has no batch assigned — traceability required`,
+      console.warn(
+        `[txn] Product "${product.name}" has no batch assigned — traceability gap`,
       );
     }
 
