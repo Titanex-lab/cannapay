@@ -210,6 +210,18 @@ router.post(
   }),
 );
 
+// ── GET /diagnostic — Check users exist (temporary) ──────────────────
+
+router.get(
+  '/diagnostic',
+  asyncHandler(async (req: Request, res: Response) => {
+    const users = await prisma.user.findMany({ select: { email: true, fullName: true, role: true, isActive: true } });
+    const count = await prisma.user.count();
+    const strains = await prisma.strain.count();
+    res.json({ userCount: count, strains, users });
+  }),
+);
+
 // ── POST /seed — Seed production database ────────────────────────────
 
 router.post(
