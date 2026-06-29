@@ -25,7 +25,9 @@ export default function HomePage() {
   return (
     <div className="flex h-screen items-center justify-center bg-slate-950">
       <div className="flex flex-col items-center gap-4">
-        <img src="/cannapay-logo.png" alt="CannaPay" className="h-8 w-auto max-w-[160px]" />
+        <div className="bg-white rounded-xl p-3">
+          <img src="/cannapay-logo.png" alt="CannaPay" className="w-44 h-auto" />
+        </div>
         <div className="h-5 w-5 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
       </div>
     </div>

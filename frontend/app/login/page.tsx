@@ -113,7 +113,9 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         {/* Branding */}
         <div className="mb-8 text-center">
-          <img src="/cannapay-logo.png" alt="CannaPay" className="mx-auto h-10 w-auto max-w-[200px]" />
+          <div className="bg-white rounded-xl p-3 mx-auto w-fit">
+            <img src="/cannapay-logo.png" alt="CannaPay" className="w-44 h-auto" />
+          </div>
           <p className="mt-3 text-sm text-zinc-500">Dispensary Management</p>
         </div>
 
