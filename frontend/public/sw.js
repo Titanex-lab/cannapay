@@ -1,7 +1,7 @@
 // Cache version — bumped on every deploy to invalidate old caches
 const CACHE = 'cannapay-' + Date.now();
 
-self.addEventListener('install', (event) => {
+self.addEventListener('install', () => {
   self.skipWaiting();
 });
 
@@ -14,8 +14,13 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+self.addEventListener('message', (event) => {
+  if (event.data === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener('fetch', (event) => {
-  // Network-first for HTML, cache for static assets
   if (event.request.mode === 'navigate') {
     event.respondWith(fetch(event.request).catch(() =>
       caches.match(event.request)
