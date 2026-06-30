@@ -27,7 +27,7 @@ function useDebounce<T>(value: T, delay: number): T {
   return debounced;
 }
 
-export function ProductSearch() {
+export function ProductSearch({ onQueryChange }: { onQueryChange?: (query: string) => void }) {
   const [query, setQuery] = useState('');
   const [highlightIndex, setHighlightIndex] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
@@ -38,6 +38,13 @@ export function ProductSearch() {
   const user = useAuthStore((s) => s.user);
   const addItem = useCartStore((s) => s.addItem);
   const items = useCartStore((s) => s.items);
+
+  // Notify parent of raw query changes (for grid visibility)
+  const onQueryChangeRef = useRef(onQueryChange);
+  onQueryChangeRef.current = onQueryChange;
+  useEffect(() => {
+    onQueryChangeRef.current?.(query);
+  }, [query]);
 
   // Subscribe to real-time stock overrides from socket events
   const _stockTick = useSyncExternalStore(

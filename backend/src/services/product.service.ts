@@ -99,7 +99,7 @@ export async function listProducts(filters?: ProductFilters) {
   // locationId when requested.
   const include: Record<string, unknown> = {
     strain: {
-      select: { id: true, name: true },
+      select: { id: true, name: true, type: true },
     },
     batch: {
       select: { id: true, lotNumber: true },
@@ -150,7 +150,7 @@ export async function getProduct(id: string) {
     where: { id },
     include: {
       strain: {
-        select: { id: true, name: true },
+        select: { id: true, name: true, type: true },
       },
       batch: {
         select: { id: true, lotNumber: true },
@@ -198,7 +198,7 @@ export async function createProduct(data: CreateProductInput) {
     },
     include: {
       strain: {
-        select: { id: true, name: true },
+        select: { id: true, name: true, type: true },
       },
       batch: {
         select: { id: true, lotNumber: true },
@@ -251,7 +251,7 @@ export async function updateProduct(id: string, data: UpdateProductInput) {
     },
     include: {
       strain: {
-        select: { id: true, name: true },
+        select: { id: true, name: true, type: true },
       },
       batch: {
         select: { id: true, lotNumber: true },
@@ -285,7 +285,7 @@ export async function getProductsByCategory(
     orderBy: { name: 'asc' },
     include: {
       strain: {
-        select: { id: true, name: true },
+        select: { id: true, name: true, type: true },
       },
       batch: {
         select: { id: true, lotNumber: true },

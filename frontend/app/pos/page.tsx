@@ -3,7 +3,9 @@
 import { useState, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { useAuthStore, useCartStore } from '@/lib/store';
+import { useQuery } from '@tanstack/react-query';
+import { useAuthStore, useCartStore, type CartItem } from '@/lib/store';
+import { api } from '@/lib/api';
 import { ProductSearch } from './components/ProductSearch';
 import { CartPanel } from './components/CartPanel';
 import { LogoutButton } from './components/LogoutButton';
@@ -19,6 +21,8 @@ export default function POSPage() {
   const [showHoldCart, setShowHoldCart] = useState(false);
   const [showVoidModal, setShowVoidModal] = useState(false);
   const [cartOpenMobile, setCartOpenMobile] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showGrid, setShowGrid] = useState(true);
 
   useInventorySync();
 
@@ -27,6 +31,38 @@ export default function POSPage() {
   const subtotal = useCartStore((s) => s.subtotal());
   const itemCount = useCartStore((s) => s.itemCount());
   const logout = useAuthStore((s) => s.logout);
+  const addItem = useCartStore((s) => s.addItem);
+
+  // Fetch active products for the grid
+  const { data: productsData } = useQuery({
+    queryKey: ['productsGrid', user?.locationId],
+    queryFn: () =>
+      api
+        .get('/products', { params: { limit: 100, isActive: true, locationId: user?.locationId } })
+        .then((r) => r.data.data as Array<{
+          id: string;
+          name: string;
+          category: string;
+          sellPrice: number;
+          unitType: string;
+          strain?: { id: string; name: string; type: string } | null;
+          inventory?: Array<{ quantity: number }>;
+        }>),
+    enabled: !!user?.locationId,
+    staleTime: 30_000,
+  });
+
+  const products = productsData ?? [];
+
+  // Handle search query changes from ProductSearch
+  const handleSearchQueryChange = (q: string) => {
+    setSearchQuery(q);
+    if (q.length > 0) {
+      setShowGrid(false);
+    } else {
+      setShowGrid(true);
+    }
+  };
 
   const userRole = user?.role ?? 'budtender';
   const allTabItems = [
@@ -67,7 +103,120 @@ export default function POSPage() {
 
       {/* ── Search + Results — flex:1, only this scrolls ───────────── */}
       <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
-        <ProductSearch />
+        <ProductSearch onQueryChange={handleSearchQueryChange} />
+
+        {/* Product card grid — shown when search is empty */}
+        {showGrid && searchQuery.length === 0 && (
+          <div style={{flex:1,overflowY:'auto',padding:'0 12px 16px'}}>
+            {products.length === 0 && (
+              <div style={{textAlign:'center',padding:'24px 0',color:'#64748b',fontSize:14}}>
+                No products available
+              </div>
+            )}
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(140px, 1fr))',gap:10}}>
+              {products.map((product) => {
+                const stockTotal = product.inventory?.reduce((sum, inv) => sum + (inv.quantity || 0), 0) ?? 0;
+                const strainType = product.strain?.type?.toLowerCase() ?? '';
+                const strainBadgeBg =
+                  strainType === 'indica' ? '#a855f7' :
+                  strainType === 'sativa' ? '#eab308' :
+                  strainType === 'hybrid' ? '#10b981' : '#475569';
+                const strainBadgeText =
+                  strainType === 'indica' ? '#f3e8ff' :
+                  strainType === 'sativa' ? '#fef9c3' :
+                  strainType === 'hybrid' ? '#d1fae5' : '#94a3b8';
+
+                const handleAddToCart = () => {
+                  const item: CartItem = {
+                    productId: product.id,
+                    name: product.name,
+                    strainName: product.strain?.name,
+                    category: product.category,
+                    quantity: 1,
+                    unitPrice: product.sellPrice,
+                    unitType: product.unitType || 'each',
+                  };
+                  addItem(item);
+                };
+
+                return (
+                  <div
+                    key={product.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={handleAddToCart}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleAddToCart(); }}
+                    style={{
+                      background:'#0f172a',
+                      border:'1px solid #1e293b',
+                      borderRadius:12,
+                      padding:12,
+                      cursor:'pointer',
+                      display:'flex',
+                      flexDirection:'column',
+                      gap:6,
+                      transition:'box-shadow 0.15s, border-color 0.15s',
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 12px rgba(0,0,0,0.4)';
+                      (e.currentTarget as HTMLElement).style.borderColor = '#334155';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.boxShadow = '';
+                      (e.currentTarget as HTMLElement).style.borderColor = '#1e293b';
+                    }}
+                  >
+                    {/* Product name */}
+                    <div style={{fontSize:13,fontWeight:600,color:'#e2e8f0',lineHeight:1.3,overflow:'hidden',textOverflow:'ellipsis',display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical'}}>
+                      {product.name}
+                    </div>
+
+                    {/* Price */}
+                    <div style={{fontSize:15,fontWeight:700,color:'#34d399'}}>
+                      R {product.sellPrice.toFixed(2)}
+                    </div>
+
+                    {/* Badges row */}
+                    <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+                      {/* Category badge */}
+                      <span style={{
+                        display:'inline-block',
+                        padding:'2px 6px',
+                        borderRadius:4,
+                        fontSize:10,
+                        fontWeight:500,
+                        background:'#1e293b',
+                        color:'#94a3b8',
+                      }}>
+                        {product.category}
+                      </span>
+
+                      {/* Strain type badge */}
+                      {strainType && (
+                        <span style={{
+                          display:'inline-block',
+                          padding:'2px 6px',
+                          borderRadius:4,
+                          fontSize:10,
+                          fontWeight:600,
+                          background: strainBadgeBg,
+                          color: strainBadgeText,
+                        }}>
+                          {strainType}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Stock count */}
+                    <div style={{fontSize:11,color: stockTotal > 5 ? '#4ade80' : stockTotal > 0 ? '#facc15' : '#f87171'}}>
+                      {stockTotal > 0 ? `${stockTotal} in stock` : 'Out of stock'}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Cart bar — 64px, always visible ────────────────────────── */}
