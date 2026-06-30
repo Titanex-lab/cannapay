@@ -11,6 +11,7 @@ import { CheckoutModal } from './components/CheckoutModal';
 import { HoldCartModal } from './components/HoldCartModal';
 import { VoidConfirmModal } from './components/VoidConfirmModal';
 import { useInventorySync } from '@/hooks/useInventorySync';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default function POSPage() {
   const pathname = usePathname();
@@ -57,6 +58,7 @@ export default function POSPage() {
         </div>
         <div style={{display:'flex',gap:8,alignItems:'center'}}>
           <span style={{color:'#94a3b8',fontSize:13}}>{user?.fullName ?? ''}</span>
+          <ThemeToggle />
           <button onClick={handleLogout} style={{padding:'6px 12px',background:'#1e293b',color:'white',border:'1px solid #334155',borderRadius:8,fontSize:13,cursor:'pointer'}}>
             Logout
           </button>

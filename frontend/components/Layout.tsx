@@ -3,6 +3,7 @@
 import { useAuthStore } from '@/lib/store';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { useState, useEffect, useCallback } from 'react';
 
 // ── Nav items ─────────────────────────────────────────────────────────────
@@ -102,11 +103,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const sidebarContent = (
     <div className="flex h-full w-52 flex-col bg-slate-950 border-r border-slate-800">
-      {/* Logo */}
-      <div className="px-4 py-3">
-        <div className="bg-white rounded-lg p-1.5 inline-block">
-          <img src="/cannapay-logo.png" alt="CannaPay" className="w-36 h-auto" />
+      {/* Logo + theme toggle */}
+      <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800">
+        <div className="bg-white rounded-md px-1.5 py-0.5">
+          <img src="/cannapay-logo.png" alt="CannaPay" className="w-28 h-auto" />
         </div>
+        <ThemeToggle />
       </div>
 
       {/* Nav items */}

@@ -110,14 +110,15 @@ export default function LoginPage() {
   }, [mode]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4">
+    <div className="flex min-h-screen items-center justify-center login-bg-dark px-4">
       <div className="w-full max-w-sm">
         {/* Branding */}
-        <div className="mb-8 text-center">
-          <div className="bg-white rounded-xl p-3 mx-auto w-fit">
-            <img src="/cannapay-logo.png" alt="CannaPay" className="w-44 h-auto" />
+        <div className="mb-6 text-center">
+          <div className="bg-white rounded-lg px-2 py-1.5 mx-auto w-fit mb-3 shadow-sm">
+            <img src="/cannapay-logo.png" alt="CannaPay" className="w-28 h-auto" />
           </div>
-          <p className="mt-3 text-sm text-zinc-500">Dispensary Management</p>
+          <h1 className="text-xl font-bold mb-1">Welcome to CannaPay</h1>
+          <p className="text-sm text-slate-500">Dispensary Management</p>
         </div>
 
         {/* Card */}
