@@ -13,13 +13,13 @@ interface Product {
   category: string;
   strainId: string | null;
   strainName?: string;
-  price: number;
+  sellPrice: number;
   costPrice: number;
   unitType: string;
   weight: number | null;
   barcode: string | null;
   taxCategory: string;
-  active: boolean;
+  isActive: boolean;
   stock: number;
   batchId?: string;
   batchLotNumber?: string;
@@ -225,7 +225,7 @@ export function ProductTable({ onAdjust }: Props) {
                       {product.strainName || '—'}
                     </td>
                     <td className="px-4 py-3 font-mono">
-                      R {product.price?.toFixed(2) ?? '—'}
+                      R {(product.sellPrice ?? 0).toFixed(2)}
                     </td>
                     <td className="px-4 py-3">
                       <span className={`font-medium ${getStockColor(product.stock)}`}>
@@ -238,12 +238,12 @@ export function ProductTable({ onAdjust }: Props) {
                     <td className="px-4 py-3">
                       <span
                         className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
-                          product.active
+                          product.isActive
                             ? 'bg-emerald-500/20 text-emerald-300'
                             : 'bg-red-500/20 text-red-300'
                         }`}
                       >
-                        {product.active ? 'Active' : 'Inactive'}
+                        {product.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                     <td className="px-4 py-3">

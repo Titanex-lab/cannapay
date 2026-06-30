@@ -12,13 +12,13 @@ interface Product {
   category: string;
   strainId: string | null;
   strainName?: string;
-  price: number;
+  sellPrice: number;
   costPrice: number;
   unitType: string;
   weight: number | null;
   barcode: string | null;
   taxCategory: string;
-  active: boolean;
+  isActive: boolean;
   stock: number;
   batchId?: string;
   batchLotNumber?: string;
@@ -122,12 +122,12 @@ export function ProductForm({ product, onClose, onSuccess }: Props) {
         strainId: product.strainId || '',
         batchId: product.batchId || '',
         costPrice: product.costPrice?.toString() || '',
-        sellPrice: product.price?.toString() || '',
+        sellPrice: product.sellPrice?.toString() || '',
         unitType: product.unitType,
         weight: product.weight?.toString() || '',
         barcode: product.barcode || '',
         taxCategory: product.taxCategory,
-        active: product.active ?? true,
+        active: product.isActive ?? true,
       });
     } else {
       setFormData((prev) => ({ ...prev, sku: generateSKU() }));
@@ -157,7 +157,7 @@ export function ProductForm({ product, onClose, onSuccess }: Props) {
         strainId: formData.strainId || null,
         batchId: formData.batchId || null,
         costPrice: parseFloat(formData.costPrice) || 0,
-        price: parseFloat(formData.sellPrice) || 0,
+        sellPrice: parseFloat(formData.sellPrice) || 0,
         unitType: formData.unitType,
         weight: isWeightBased ? (parseFloat(formData.weight) || null) : null,
         barcode: formData.barcode || null,

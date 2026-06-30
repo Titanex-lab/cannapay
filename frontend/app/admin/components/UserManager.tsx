@@ -14,6 +14,7 @@ interface UserRecord {
   role: string;
   locationId: string | null;
   locationName?: string;
+  location?: { id: string; name: string };
   pin?: string;
   active: boolean;
   createdAt?: string;
@@ -333,14 +334,14 @@ export function UserManager() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-slate-300">
-                      {user.locationName || user.locationId || '—'}
+                      {user.location?.name ?? user.locationName ?? user.locationId ?? '—'}
                     </td>
                     <td className="px-4 py-3">
                       <span
                         className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
                           user.active
                             ? 'bg-emerald-500/20 text-emerald-300'
-                            : 'bg-red-500/20 text-red-300'
+                            : 'bg-slate-500/20 text-slate-300'
                         }`}
                       >
                         {user.active ? 'Active' : 'Inactive'}
