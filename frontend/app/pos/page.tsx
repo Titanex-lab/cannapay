@@ -107,13 +107,15 @@ export default function POSPage() {
 
         {/* Product card grid — shown when search is empty */}
         {showGrid && searchQuery.length === 0 && (
-          <div style={{flex:1,overflowY:'auto',padding:'0 12px 16px'}}>
-            {products.length === 0 && (
-              <div style={{textAlign:'center',padding:'24px 0',color:'#64748b',fontSize:14}}>
-                No products available
+          <div style={{flex:1,overflowY:'auto',padding:'4px 12px 12px'}}>
+            {products.length === 0 ? (
+              <div style={{textAlign:'center',padding:'40px 0',color:'#64748b',fontSize:14}}>
+                <div style={{fontSize:36,marginBottom:8}}>📦</div>
+                <p>No products available</p>
+                <p style={{fontSize:12,marginTop:4}}>Add products in Inventory</p>
               </div>
-            )}
-            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(140px, 1fr))',gap:10}}>
+            ) : (
+              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(160px, 1fr))',gap:10,paddingBottom:4}}>
               {products.map((product) => {
                 const stockTotal = product.inventory?.reduce((sum, inv) => sum + (inv.quantity || 0), 0) ?? 0;
                 const strainType = product.strain?.type?.toLowerCase() ?? '';
@@ -215,6 +217,7 @@ export default function POSPage() {
                 );
               })}
             </div>
+            )}
           </div>
         )}
       </div>
